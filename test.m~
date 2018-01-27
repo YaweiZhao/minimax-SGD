@@ -28,7 +28,7 @@ end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix(n*n/2));% hyper-parameter for sampling w
 sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
-Knn = zeros(n,n);%kernel matrix
+Knn = zeros();%kernel matri
 %mini-batch trick
 b = fix(0.1*n);%mini-batch
 stoc_nabla_mu = zeros(n,1);
@@ -49,6 +49,7 @@ for t=1:T
         for j=1:n
             Knn(i,j) = u_0*exp(1/2*transpose(training_data(i,:)-training_data(j,:)) * diag(ones(1,d) ./ u) * (training_data(i,:)-training_data(j,:))+ tau);
         end
+        
     end
     %define the auxilary matrix
     Knn_inv = inv(Knn);

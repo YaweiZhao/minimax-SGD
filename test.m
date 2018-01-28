@@ -16,7 +16,7 @@ alpha_0 = 1;% learning rate for the primal update
 beta_0 = 1e-5;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 loss = zeros(T,1);
-theta = ones(n+n*n,1);%primal variable, mu + L
+theta = rand(n+n*n,1);%primal variable, mu + L
 y = ones(2,1);%dual variable
 pair_dist = zeros(n*n,1);
 for i=1:n
@@ -84,7 +84,7 @@ for t=1:T
     %% update the dual variable
     %compute the stochastic gradients w.r.p.t y
     mu_temp = theta(1:n,:);
-    L_temp = theta(n+1:n*n,:);
+    L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
     p_alpha_v_w = 1/(power((2*3.14159),n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
     log_p_q_1 = 0;

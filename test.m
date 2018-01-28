@@ -1,12 +1,7 @@
 clear;
 %load data
-<<<<<<< HEAD
-data = load('../../heart/heart.mat');
-data = data.yy;
-=======
 data = load('~/simulation_based_machine_learning_library/dataset/heart/heart.mat');
 data = data.data;
->>>>>>> origin/master
 [n,d] = size(data);
 label = data(:,1);
 %label(label==2) = -1;% all the labels are +1 or -1.
@@ -68,8 +63,8 @@ for t=1:T
     %compute the stochastic gradients w.r.p.t theta
     i = randi(n);
     %the first item of g
-    mu_temp = [eye(n,n) zeros(n,n*n)]*theta;
-    L_temp = [zeros(n*n,n) eye(n*n, n*n)]*theta;
+    mu_temp = theta(1:n,:);
+    L_temp = theta(n+1:n*n);
     L_temp = reshape(L_temp,n,n);
     stoc_nabla_mu_L_temp_1 = 1/(power(2*3.14159, n/2)*sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon)*Knn_inv*(mu_temp + L_temp*epsilon))*(-1/2)*2*Knn_inv*(mu_temp + L_temp*epsilon);
     stoc_nabla_mu_L_1 = Q'*stoc_nabla_mu_L_temp_1;%
@@ -88,8 +83,8 @@ for t=1:T
     
     %% update the dual variable
     %compute the stochastic gradients w.r.p.t y
-    mu_temp = [eye(n,n) zeros(n,n*n)]*theta;
-    L_temp = [zeros(n*n,n) eye(n*n, n*n)]*theta;
+    mu_temp = theta(1:n,:);
+    L_temp = theta(n+1:n*n);
     L_temp = reshape(L_temp,n,n);
     p_alpha_v_w = 1/(power((2*3.14159),n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
     log_p_q_1 = 0;
@@ -108,8 +103,8 @@ for t=1:T
     
     %% evaluate the loss
     theta_avg = 1/t*sum(theta_sequence,2);
-    mu_temp = [eye(n,n) zeros(n,n*n)]*theta_avg;
-    L_temp = [zeros(n*n,n) eye(n*n, n*n)]*theta_avg;
+    mu_temp = theta_avg(1:n,:);
+    L_temp = theta_avg(n+1:n*n);
     L_temp = reshape(L_temp,n,n);
     log_p_alpha_v_w = -1*(n/2*log(2*3.14159)+1/2*log(Knn_det)) - 1/2*transpose(mu_temp)*Knn_inv*(mu_temp);
     log_p_q_1 = 0;

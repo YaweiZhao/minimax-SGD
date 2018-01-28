@@ -13,7 +13,7 @@ training_data = data(1:fix(n/5),2:d);
 %% initialize variables
 T = 200;
 alpha_0 = 1e-1;% learning rate for the primal update
-beta_0 = 1e-4;%learning rate for the dual update
+beta_0 = 1e-5;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 loss = zeros(T,1);
 theta = rand(n+n*n,1);%primal variable, mu + L

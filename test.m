@@ -12,9 +12,9 @@ training_data = data(:,2:d);
 
 %% initialize variables
 T = 200;
-alpha_0 = 1e-2;% learning rate for the primal update
-beta_0 = 1e-2;%learning rate for the dual update
-theta_sequence = zeros(T,n+n*n);
+alpha_0 = 1;% learning rate for the primal update
+beta_0 = 1e-5;%learning rate for the dual update
+theta_sequence = zeros(n+n*n,T);
 loss = zeros(T,1);
 theta = rand(n+n*n,1);%primal variable, mu + L
 y = ones(2,1);%dual variable
@@ -76,9 +76,9 @@ for t=1:T
     stoc_nabla_mu_L_2 = stoc_nabla_mu_L_temp_2 + [zeros(n,1); reshape(inv(L_temp'), n*n,1)];
     stoc_nabla_mu_L = [stoc_nabla_mu_L_1 stoc_nabla_mu_L_2];
     % update rule for the primal variable: theta
-    alpha = alpha_0/sqrt(T);
+    alpha = alpha_0/sqrt(t);
     theta = theta - alpha*stoc_nabla_mu_L*y;
-    theta_sequence(t,:)  = theta;
+    theta_sequence(:,t)  = theta;
     
     
     %% update the dual variable
@@ -98,12 +98,13 @@ for t=1:T
     
 
     %update rule for the dual variable: y
-    beta = beta_0/sqrt(T);
+    beta = beta_0/sqrt(t);
     y = y+beta*(g_v_w' - nabla_f_star_y);
     
     %% evaluate the loss
-    mu_temp = [eye(n,n) zeros(n,n*n)]*theta;
-    L_temp = [zeros(n*n,n) eye(n*n, n*n)]*theta;
+    theta_avg = 1/t*sum(theta_sequence,2);
+    mu_temp = [eye(n,n) zeros(n,n*n)]*theta_avg;
+    L_temp = [zeros(n*n,n) eye(n*n, n*n)]*theta_avg;
     L_temp = reshape(L_temp,n,n);
     log_p_alpha_v_w = -1*(n/2*log(2*3.14159)+1/2*log(Knn_det)) - 1/2*transpose(mu_temp)*Knn_inv*(mu_temp);
     log_p_q_1 = 0;
@@ -118,6 +119,12 @@ for t=1:T
 end
 save('loss.mat','loss');
 %plot the convergence of the loss function 
+<<<<<<< Updated upstream
 %plot([1:T],loss);
 %xlabel('number of iterations');
 %ylabel('loss')
+=======
+plot(1:T,loss);
+xlabel('number of iterations');
+ylabel('loss')
+>>>>>>> Stashed changes

@@ -1,6 +1,6 @@
 clear;
 %load data
-data = load('/Users/yawei/Documents/MATLAB/simulation based algorithm test library/simulation_based_machine_learning_library/dataset/heart/test_heart.mat');
+data = load('~/simulation_based_machine_learning_library/dataset/heart/heart.mat');
 data = data.yy;
 [n,d] = size(data);
 label = data(:,1);
@@ -116,8 +116,8 @@ for t=1:T
     
     
 end
-
+save('loss.mat','loss');
 %plot the convergence of the loss function 
-plot([1:T],loss);
-xlabel('number of iterations');
-ylabel('loss')
+%plot([1:T],loss);
+%xlabel('number of iterations');
+%ylabel('loss')

@@ -1,7 +1,7 @@
 clear;
 %load data
 data = load('~/simulation_based_machine_learning_library/dataset/heart/heart.mat');
-data = data.yy;
+data = data.data;
 [n,d] = size(data);
 label = data(:,1);
 %label(label==2) = -1;% all the labels are +1 or -1.

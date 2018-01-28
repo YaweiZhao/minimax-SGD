@@ -6,14 +6,14 @@ data = data.data;
 label = data(:,1);
 %label(label==2) = -1;% all the labels are +1 or -1.
 training_data = data(:,2:d);
-%training_data = transpose(mapstd(training_data'));
+training_data = transpose(mapstd(training_data'));
 %training_data = [training_data ones(n,1)];% add 1-offset
 [n,d] = size(training_data);
 
 %% initialize variables
 T = 10;
-alpha_0 = 1;% learning rate for the primal update
-beta_0 = 1e-5;%learning rate for the dual update
+alpha_0 = 1e-1;% learning rate for the primal update
+beta_0 = 1e-6;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 loss = zeros(T,1);
 theta = rand(n+n*n,1);%primal variable, mu + L
@@ -38,6 +38,7 @@ stoc_nabla_mu = zeros(n,1);
 stoc_nabla_L = zeros(n*n,1);
 
 for t=1:T
+    disp(t);
     %sample v, w
     logw = normrnd(mu_0,sigma_0,d+2,1);
     w = exp(logw);

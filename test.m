@@ -1,6 +1,6 @@
 clear;
 %load data
-data = load('~/simulation_based_machine_learning_library/dataset/heart/heart.mat');
+data = load('../../heart/heart.mat');
 data = data.yy;
 [n,d] = size(data);
 label = data(:,1);
@@ -11,7 +11,7 @@ training_data = data(:,2:d);
 [n,d] = size(training_data);
 
 %% initialize variables
-T = 200;
+T = 10;
 alpha_0 = 1;% learning rate for the primal update
 beta_0 = 1e-5;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
@@ -119,12 +119,7 @@ for t=1:T
 end
 save('loss.mat','loss');
 %plot the convergence of the loss function 
-<<<<<<< Updated upstream
 %plot([1:T],loss);
 %xlabel('number of iterations');
 %ylabel('loss')
-=======
-plot(1:T,loss);
-xlabel('number of iterations');
-ylabel('loss')
->>>>>>> Stashed changes
+

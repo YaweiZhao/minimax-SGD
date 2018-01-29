@@ -1,19 +1,19 @@
 clear;
 %load data
-data = load('~/simulation_based_machine_learning_library/dataset/heart/heart.mat');
+data = load('./heart.mat');
 data = data.data;
 [n,d] = size(data);
 label = data(:,1);
 %label(label==2) = -1;% all the labels are +1 or -1.
-training_data = data(1:fix(n/5),2:d);
+training_data = data(1:fix(n/10),2:d);
 %training_data = transpose(mapstd(training_data'));
 %training_data = [training_data ones(n,1)];% add 1-offset
 [n,d] = size(training_data);
 
 %% initialize variables
 T = 200;
-alpha_0 = 1e-1;% learning rate for the primal update
-beta_0 = 1e-5;%learning rate for the dual update
+alpha_0 = 1;% learning rate for the primal update
+beta_0 = 1e-2;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 loss = zeros(T,1);
 theta = rand(n+n*n,1);%primal variable, mu + L
@@ -33,7 +33,6 @@ mu_0 = pair_dist_ordering(fix(n*n/2));% hyper-parameter for sampling w
 sigma_0 = 1;
 Knn = zeros(n,n);%kernel matrix
 %mini-batch trick
-b = 1;%mini-batch
 stoc_nabla_mu = zeros(n,1);
 stoc_nabla_L = zeros(n*n,1);
 
@@ -74,7 +73,9 @@ for t=1:T
     for j=1:n
         stoc_nabla_mu_L_temp_2 = stoc_nabla_mu_L_temp_2 + (label(j)*transpose(Q(j,:)))/(1+exp(label(j)*Q(j,:)*theta));
     end
-    stoc_nabla_mu_L_2 = stoc_nabla_mu_L_temp_2 + [zeros(n,1); reshape(inv(L_temp'), n*n,1)];
+    %stoc_nabla_mu_L_2 = stoc_nabla_mu_L_temp_2 + [zeros(n,1); reshape(inv(L_temp'), n*n,1)];
+    stoc_nabla_mu_L_2 = stoc_nabla_mu_L_temp_2 + [zeros(n,1); reshape(inv(L_temp'+1e-6*eye(n)), n*n,1)];
+   
     stoc_nabla_mu_L = [stoc_nabla_mu_L_1 stoc_nabla_mu_L_2];
     % update rule for the primal variable: theta
     alpha = alpha_0/sqrt(t);

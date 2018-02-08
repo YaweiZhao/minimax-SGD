@@ -15,7 +15,7 @@ training_data = transpose(mapstd(training_data'));
 [n,d] = size(training_data);
 
 %% initialize variables
-T = 100;
+T = 50;
 alpha_0 = 1e-3;% learning rate for the primal update
 beta_0 = 1e-3;%learning rate for the dual update
 %alpha_0 = 2e-2;% learning rate for the primal update
@@ -26,8 +26,8 @@ test_loss = zeros(T,1);
 %theta = ones(n+n*n,1);%primal variable, mu + L
 theta = rand(n+n*n,1);
 num_nodes_nn = fix(n);
-w1 = 1e-5*rand(2,num_nodes_nn);
-w2 = 1e-5*rand(num_nodes_nn,n+n*n);
+w1 = 1e-6*rand(2,num_nodes_nn);
+w2 = 1e-6*rand(num_nodes_nn,n+n*n);
 b1 = ones(2,1);
 b2 = ones(num_nodes_nn,1);
 y = 1 ./ exp(-1*(w1 * (1 ./ exp(-1*(w2*theta+b2)))+b1));
@@ -112,7 +112,7 @@ for t=1:T
     nabla_g1_theta = 1/((2*3.14159)^(n/2)*sqrt(Knn_det))*exp(-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon))*(-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
     
     nabla_g2_theta_I1 = [zeros(n_test,1); label(n_test+1:n,:) ./ (1+exp(label(n_test+1:n,:) .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); zeros(n_test*n,1);reshape( repmat(label(n_test+1:n,:) ./ (1+exp(label(n_test+1:n,:) .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1), (n-n_test)*n,1)];
-    nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];%1e-6 is used to avoid sigular of L
+    nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'+1e-8*eye(n)), n*n,1)];%1e-6 is used to avoid sigular of L
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
     nabla_g_y_theta_g = y(1,:)*nabla_g1_theta+y(2,:)*nabla_g2_theta;
     
@@ -129,8 +129,8 @@ for t=1:T
     
     
     % update rule for the primal variable: theta
-    %alpha = alpha_0/sqrt(t);
-    alpha = alpha_0;%for test
+    alpha = alpha_0/sqrt(t);
+    %alpha = alpha_0;%for test
     theta = theta - alpha*((nabla_g_y_theta_g + nabla_g_y_theta_y) - nabla_f_star_theta);
     theta_sequence(:,t)  = theta;
     
@@ -154,26 +154,26 @@ for t=1:T
      
     nabla_f_star_temp = 1 ./ (1 + exp(w1(1,:)*(1 ./ (1+ exp(-1*(w2*theta + b2))))));
     nabla_f_star_w1 = nabla_f_star_temp*[ transpose(1 ./ (1+exp(-1*(w2*theta+b2)))); zeros(1,num_nodes_nn)];%2 x num_nodes_nn
-    nabla_f_star_w2 = nabla_f_star_temp*   repmat(transpose(w1(1,:)) .* (exp(w2*theta+b2)) ./ (1+((exp(w2*theta+b2)) .^ 2)) ,1,n+n*n) .* repmat(theta',num_nodes_nn,1);
+    nabla_f_star_w2 = nabla_f_star_temp*   repmat(transpose(w1(1,:)) .* (exp(w2*theta+b2)) ./ (1+((exp(w2*theta+b2)) .^ 2)) ,1,n+n*n) .* repmat(theta',n,1);
     nabla_f_star_b1 = nabla_f_star_temp;
     nabla_f_star_b2 = nabla_f_star_temp * transpose(w1(1,:)) .* (exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^2) );
     
-    nabla_g_y_g1_temp = g_v_w(1,1)* (exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,:))) / ((1+exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,:)))^2);
-    nabla_g_y_g2_temp = g_v_w(1,2)* (exp(w1(2,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(2,:))) / ((1+exp(w1(2,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(2,:)))^2);    
+    nabla_g_y_g1_temp = g_v_w(1,1)* (exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,1))) / ((1+exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,1)))^2);
+    nabla_g_y_g2_temp = g_v_w(1,2)* (exp(w1(2,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(2,1))) / ((1+exp(w1(2,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(2,1)))^2);    
     nabla_g_y_w1 = [nabla_g_y_g1_temp * transpose(1 ./ (1+exp(-1*(w2*theta+b2)))); nabla_g_y_g2_temp * transpose(1 ./ (1+exp(-1*(w2*theta+b2))))] ;% 2 x num_nodes_nn
     
     %nabla_g_y_w2_temp_g1_temp = g_v_w(1,1)* (exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,1))) / ((1+exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,1)))^2);
     nabla_g_y_w2_temp_g1 = nabla_g_y_g1_temp * transpose(w1(1,:)) .* (exp(w2*theta+b2)) ./ ((1+exp(w2*theta+b2)) .^ 2);
     %nabla_g_y_w2_temp_g2_temp = g_v_w(2,1)* (exp(w1(2,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(2,1))) / ((1+exp(w1(2,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(2,1)))^2);
     nabla_g_y_w2_temp_g2 = nabla_g_y_g2_temp * transpose(w1(2,:)) .* (exp(w2*theta+b2)) ./ ((1+exp(w2*theta+b2)) .^ 2);
-    nabla_g_y_w2 = repmat(nabla_g_y_w2_temp_g1 + nabla_g_y_w2_temp_g2,1,n+n*n) .* repmat(theta',num_nodes_nn,1);
+    nabla_g_y_w2 = repmat(nabla_g_y_w2_temp_g1 + nabla_g_y_w2_temp_g2,1,n+n*n) .* repmat(theta',n,1);
     
     nabla_g_y_b1 = [nabla_g_y_g1_temp;nabla_g_y_g2_temp];
-    nabla_g_y_b2 = repmat(nabla_g_y_g1_temp,n,1) .* transpose(w1(1,:)) .* exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^ 2) + repmat(nabla_g_y_g2_temp,n,1) .* transpose(w1(2,:)) .* exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^ 2);
+    nabla_g_y_b2 = repmat(nabla_g_y_g1_temp,n,1) .* transpose(w1(1,:)) .* exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^ 2) + repmat(nabla_g_y_g1_temp,n,1) .* transpose(w1(2,:)) .* exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^ 2);
     
     % update rule for the dual variable: y
-    %beta = beta_0/sqrt(t);
-    beta = beta_0;% for test
+    beta = beta_0/sqrt(t);
+    %beta = beta_0;% for test
     w1 = w1+beta*(nabla_g_y_w1 - nabla_f_star_w1);
     w2 = w2+beta*(nabla_g_y_w2 - nabla_f_star_w2);
     b1 = b1+beta*(nabla_g_y_b1 - nabla_f_star_b1);
@@ -199,7 +199,6 @@ for t=1:T
     test_loss(t,:) = test_loss_temp/n_test;
     %update y for the next iteration
     y = 1 ./ exp(-1*(w1 * (1 ./ exp(-1*(w2*theta+b2)))+b1));
-    
     disp('be careful!');
     
 end

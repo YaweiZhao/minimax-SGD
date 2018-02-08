@@ -1,0 +1,117 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2016
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2016}
+
+\usepackage{nips_2016}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2016}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage[colorlinks=true]{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\usepackage{cite}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{tabularx}
+\usepackage{pifont}
+\usepackage[noend]{algpseudocode}
+\usepackage{bm}
+\usepackage{ulem}
+\usepackage{array}
+\usepackage{balance}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\newcommand\algotext[1]{\end{algorithmic}#1\begin{algorithmic}[1]}
+
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+
+\def\e{{\bf e}}
+\def\a{{\bf a}}
+\def\b{{\bf b}}
+\def\Q{{\bf Q}}
+\def\u{{\bf u}}
+\def\v{{\bf v}}
+\def\x{{\bf x}}
+\def\y{{\bf y}}
+\def\z{{\bf z}}
+\def\w{{\bf w}}
+\def\r{{\bf r}}
+\def\s{{\bf s}}
+\def\1{{\bf 1}}
+\def\0{{\bf 0}}
+\def\D{{\bf D}}
+\def\d{{\mathrm{d}}}
+\def\E{{\mathbb{E}}}
+
+
+\def\A{\mathcal{A}}
+\def\S{\mathcal{S}}
+\def\Proj{\mathrm{Proj}}
+\begin{document}
+\title{draft}
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+&&L(\theta) =  \int  \log(E_{p_{\alpha}(\w)}(p_{\alpha}(\v|\w))) q(\v|\theta) \d \v + \int \log\frac{p_{\alpha}(\D|\v)}{q(\v|\theta)} q(\v|\theta) \d \v \\ \nonumber
+&=& \int  \log\left( \int p_{\alpha}(\v|\w) p_{\alpha}(\w)\d\w \right)  q(\v|\theta) \d\v + \int \log\frac{p_{\alpha}(\D|\v)}{q(\v|\theta)} q(\v|\theta) \d \v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|^{1/2}}e^{-\frac{1}{2}(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-\frac{1}{2}(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|^{1/2}}e^{-\frac{1}{2}\epsilon^T \epsilon} \d\v \\ \nonumber
+&+& \int \log\frac{p_{\alpha}(\D|\v)}{q(\v|\theta)} q(\v|\theta) \d\v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|^{1/2}}e^{-\frac{1}{2}(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-\frac{1}{2}(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|^{1/2}}e^{-\frac{1}{2}\epsilon^T \epsilon} \d\v \\ \nonumber
+&+& \int (\log p_{\alpha}(\D|\v) - \log q(\v|\theta)) q(\v|\theta) \d\v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|}e^{-(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|}e^{-\epsilon^T \epsilon} \d\v \\ \nonumber
+&+& \int \left( \sum\limits_{i=1}^{n-n_{test}}(-\log(1+e^{-r_i(\mu_i+L_i\epsilon)}) + \log|LL^{T}|+\epsilon^{T}\epsilon) \right)\frac{1}{|LL^T|}e^{-\epsilon^{T}\epsilon} \d\v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|}e^{-(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|}e^{-\epsilon^T \epsilon} \d (\mu+L\epsilon) \\ \nonumber
+&+& \int \left( \sum\limits_{i=1}^{n-n_{test}}(-\log(1+e^{-r_i(\mu_i+L_i\epsilon)}) + \log|LL^{T}|+\epsilon^{T}\epsilon) \right)\frac{1}{|LL^T|}e^{-\epsilon^{T}\epsilon} \d(\mu+L\epsilon) \\ \nonumber
+\end{eqnarray}
+
+\begin{algorithm}[!t]
+    \caption{Minimax SGD}
+    \label{algorithm_vrkm_plus_plus}
+    \begin{algorithmic}[1]
+        \State initialize all hyper-parameters, and initialize the primal variable $\theta$ and the dual variables $\w_1$ and $\w_2$.
+        \State $g(\theta) = [P_{\alpha}(\v|\w), \log\frac{P(D|\v)}{q(\v|\theta)}]$.
+        \State $\y=Sigmoid(\e_1 Sigmoid(\theta \e_2 + \b_2) + \b_1)$.
+        \State \textbf{update the primal variable:} 
+        \State $\Delta \theta = \frac{\partial \y_1 }{\partial \theta}g_1(\theta) + \frac{\partial \y_2 }{\partial \theta}g_2(\theta) + \frac{\partial g_1(\theta) }{\partial \theta} \y_1 + \frac{\partial g_2(\theta) }{\partial \theta} \y_2 -   \frac{\partial f^{\ast}(\y)}{\partial \theta}$
+        \State $\theta = \theta - \alpha \Delta \theta$.
+        \State \textbf{update the dual variable:} 
+        \State $\e_1 = \e_1 + \beta \left (g(\theta)\frac{\partial \y}{\partial \e_1} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \e_1} \right)$.
+        \State $\e_2 = \e_2 + \beta \left (g(\theta)\frac{\partial \y}{\partial \e_2} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \e_2} \right)$.
+        \State $\b_1 = \b_1 + \beta \left ( g(\theta)\frac{\partial \y}{\partial \b_1} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \b_1}\right)$.
+        \State $\b_2 = \b_2 + \beta \left ( g(\theta)\frac{\partial \y}{\partial \b_2} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \b_2}\right)$.
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+\section*{References}
+
+\bibliography{reference}
+\bibliographystyle{nips}
+
+\end{document}

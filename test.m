@@ -2,7 +2,7 @@ clear;
 %load data
 data = load('./heart.mat');
 data = data.data;
-data = data(50:100,:);
+data = data(10:60,:);
 [n,d] = size(data);
 n_test = fix(n/5);%used to test our algo.
 label = data(1:n,1);
@@ -16,8 +16,8 @@ training_data = transpose(mapstd(training_data'));
 
 %% initialize variables
 T = 100;
-alpha_0 = 1e-4;% learning rate for the primal update
-beta_0 = 1e-4;%learning rate for the dual update
+alpha_0 = 1e-3;% learning rate for the primal update
+beta_0 = 1e-3;%learning rate for the dual update
 %alpha_0 = 2e-2;% learning rate for the primal update
 %beta_0 = 1e-4;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
@@ -31,6 +31,7 @@ w2 = 1e-6*rand(num_nodes_nn,n+n*n);
 b1 = ones(2,1);
 b2 = ones(num_nodes_nn,1);
 y = 1 ./ exp(-1*(w1 * (1 ./ exp(-1*(w2*theta+b2)))+b1));
+
 
 pair_dist = zeros(n*n,1);
 for i=1:n
@@ -84,16 +85,15 @@ for t=1:T
         end
         log_p_q_1 = log_p_q_1 - log(1+exp(-label(j,:)*(mu_temp(j)+L_temp(j,:)*epsilon)));
     end
-    log_p_q_2 = -1*(n/2*log(2*3.14159)+1/2*log(det(L_temp*transpose(L_temp)))) - 1/2*(epsilon'*epsilon);
+    log_p_q_2 = -1*(n/2*log(2*3.14159)+1/2*log(det(L_temp*L_temp'))) - 1/2*(epsilon'*epsilon);
     log_p_q = log_p_q_1  - log_p_q_2;
     g_v_w =  [p_alpha_v_w log_p_q];
     
     
     %for test
-%     y1_temp = log(y(1,:)) - log(p_alpha_v_w); 
-%     y(1,:) = exp(y1_temp);
+     %y1_temp = log(y(1,:)) - log(p_alpha_v_w); 
+     %y(1,:) = exp(y1_temp);     
 %     
-    
     
     nabla_g1_theta_temp_mu = zeros(n,1);
     for i=1:n
@@ -137,6 +137,7 @@ for t=1:T
     nabla_g_y_theta_g2 = nabla_g_y_theta_temp_g2*sum(w2' .* repmat(w1(2,:) .* transpose(exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^ 2)),n+n*n,1),2);
     
     %the first and second items of gradient in Step 5.
+    %nabla_g_y_theta_g1 = exp(log(nabla_g_y_theta_g1) - log(p_alpha_v_w));%for test
     nabla_g_y_theta_y = nabla_g_y_theta_g1 + nabla_g_y_theta_g2;
     
     
@@ -169,8 +170,9 @@ for t=1:T
      
     nabla_f_star_temp = 1 ./ (1 + exp(w1(1,:)*(1 ./ (1+ exp(-1*(w2*theta + b2))))+b1(1,:)));
     nabla_f_star_w1 = nabla_f_star_temp*[ transpose(1 ./ (1+exp(-1*(w2*theta+b2)))); zeros(1,num_nodes_nn)];%2 x num_nodes_nn
+    %nabla_f_star_w1 = nabla_f_star_temp*[ exp(log(transpose(1 ./ (1+exp(-1*(w2*theta+b2))))) - log(p_alpha_v_w)); zeros(1,num_nodes_nn)];%for test
     nabla_f_star_w2 = nabla_f_star_temp*   repmat(transpose(w1(1,:)) .* (exp(w2*theta+b2)) ./ (1+((exp(w2*theta+b2)) .^ 2)) ,1,n+n*n) .* repmat(theta',num_nodes_nn,1);
-    nabla_f_star_b1 = nabla_f_star_temp;
+    nabla_f_star_b1 = [nabla_f_star_temp; 0];
     nabla_f_star_b2 = nabla_f_star_temp * transpose(w1(1,:)) .* (exp(w2*theta+b2) ./ ((1+exp(w2*theta+b2)) .^2) );
     
     nabla_g_y_g1_temp = g_v_w(1,1)* (exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,:))) / ((1+exp(w1(1,:)*(1 ./ (1+exp(-1*(w2*theta+b2))))+b1(1,:)))^2);
@@ -207,7 +209,7 @@ for t=1:T
     test_loss_temp = 0;
     for i=1:n_test
         temp = label(i,:)*mu_temp(i,:);
-        test_loss_temp = test_loss_temp + (-1*log(1+exp(-temp)));
+        test_loss_temp = test_loss_temp + (1/(1+exp(-temp)));
     end
     test_loss(t,:) = test_loss_temp/n_test;
     %update y for the next iteration

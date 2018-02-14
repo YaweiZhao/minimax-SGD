@@ -90,16 +90,20 @@
     \label{algorithm_vrkm_plus_plus}
     \begin{algorithmic}[1]
         \State initialize all hyper-parameters, and initialize the primal variable $\theta$ and the dual variables $\w_1$ and $\w_2$.
+        \For {$t=1:T$}
+        \State sample $\epsilon$ to compute $\v=\mu+L\epsilon$.
+        \State sample $\w$ to compute ARD kernel matrix.
         \State $g(\theta) = [P_{\alpha}(\v|\w), \log\frac{P(D|\v)}{q(\v|\theta)}]$.
-        \State $\y=Sigmoid(\e_1 Sigmoid(\theta \e_2 + \b_2) + \b_1)$.
+        \State $\y=\e_1 Sigmoid( \e_2 \epsilon + \b_2) + \b_1$.
         \State \textbf{update the primal variable:} 
-        \State $\Delta \theta = \frac{\partial \y_1 }{\partial \theta}g_1(\theta) + \frac{\partial \y_2 }{\partial \theta}g_2(\theta) + \frac{\partial g_1(\theta) }{\partial \theta} \y_1 + \frac{\partial g_2(\theta) }{\partial \theta} \y_2 -   \frac{\partial f^{\ast}(\y)}{\partial \theta}$
+        \State $\Delta \theta = \frac{\partial g_1(\theta) }{\partial \theta} \y_1 + \frac{\partial g_2(\theta) }{\partial \theta} \y_2$.
         \State $\theta = \theta - \alpha \Delta \theta$.
         \State \textbf{update the dual variable:} 
         \State $\e_1 = \e_1 + \beta \left (g(\theta)\frac{\partial \y}{\partial \e_1} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \e_1} \right)$.
         \State $\e_2 = \e_2 + \beta \left (g(\theta)\frac{\partial \y}{\partial \e_2} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \e_2} \right)$.
         \State $\b_1 = \b_1 + \beta \left ( g(\theta)\frac{\partial \y}{\partial \b_1} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \b_1}\right)$.
         \State $\b_2 = \b_2 + \beta \left ( g(\theta)\frac{\partial \y}{\partial \b_2} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \b_2}\right)$.
+        \EndFor
     \end{algorithmic}
 \end{algorithm}
 

@@ -1,4 +1,4 @@
-clear;
+clear; close all;
 rng('default');
 %load data
 data = load('./heart.mat');
@@ -8,29 +8,31 @@ data = data(1:2:100,:);
 n_test = fix(n/5);%used to test our algo.
 label = data(1:n,1);
 test_label = data(1:n_test,1);
+training_label = label(n_test+1:n,:);
 %label(label==2) = -1;% all the labels are +1 or -1.
 test_data = data(1:n_test,2:d);
-training_data = data(1:n,2:d);% ALL data is used to train
+training_data = data(n_test+1:n,2:d);
 %training_data = transpose(mapstd(training_data'));
 %training_data = [training_data ones(n,1)];% add 1-offset
-[n,d] = size(training_data);
+[n_train,d] = size(training_data);
 
 %% initialize variables
-T = 10;
-alpha_0 = 1e-6;% learning rate for the primal update
-beta_0 = 1e-6;%learning rate for the dual update
+T = 2000;
+alpha_0 = 1e-3;% learning rate for the primal update
+beta_0 = 1e-1;%learning rate for the dual update
 %alpha_0 = 2e-2;% learning rate for the primal update
 %beta_0 = 1e-4;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 %theta = ones(n+n*n,1);%primal variable, mu + L
-theta = [rand(n,1); 1e-10*rand(n*n,1)];
+theta = [rand(n,1); 5e-2*reshape(eye(n),n*n,1)];
 num_nodes_nn = fix(n);
-w1 = [1e5*rand(1,num_nodes_nn); 1e-5*rand(1,num_nodes_nn)];
-w2 = 1e-7*rand(num_nodes_nn,n);
-b1 = 1e-4*ones(2,1);
-b2 = 1e-4*ones(num_nodes_nn,1);
+%w1 = [1e15*rand(1,num_nodes_nn); rand(1,num_nodes_nn)];
+w1 = 1e15*rand(1,num_nodes_nn);
+w2 = 1e-22*rand(num_nodes_nn,n);
+b1 = 1e15;
+b2 = 1e-22*ones(num_nodes_nn,1);
 
 
 pair_dist = zeros(n*n,1);
@@ -39,29 +41,33 @@ for i=1:n
         if i==j
             continue;
         end
-        pair_dist((i-1)*n+j,:) = log(norm(training_data(i,:)-training_data(j,:)));
+        %pair_dist((i-1)*n+j,:) = log(norm(training_data(i,:)-training_data(j,:)));
+        pair_dist((i-1)*n+j,:) = log(norm(data(i,2:d+1)-data(j,2:d+1)));
     end
 end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix(n*n/2));% hyper-parameter for sampling w
-%sigma_0 = var(pair_dist_ordering);%hyper-parameter for sampling w
-sigma_0 = 1;
+sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
+%sigma_0 = 1;
 Knn = zeros(n,n);%ARD kernel matrix
 
+%parameters are saved for classic gp classification
+u_save = zeros(d, T);
 for t=1:T
     disp(t);
     %sample v, w
     logw = normrnd(mu_0,sigma_0,d+2,1);
     w = exp(logw);
-    %u_0 = w(1,:);
     u_0 = 1;
+    %u_0 = exp(randn(1));
     u = w(2:d+1,:);
     %tau = w(d+2,:);
     tau = 1e-6;
+    u_save(:,t) = u;
     %compute the kernel matrice
     for i=1:n
         for j=1:n
-            pair_diff = training_data(i,:)-training_data(j,:);
+            pair_diff = data(i,2:d+1) - data(j,2:d+1);
             Knn(i,j) = u_0*exp(-1/2*pair_diff * diag(1 ./ u) * pair_diff'+ tau);
         end
     end
@@ -71,25 +77,11 @@ for t=1:T
     
     epsilon = transpose(mvnrnd(zeros(1,n),eye(n)));
     y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    %for test
-    y(1,:) = y(1,:) / (1/(power(2*3.14159,n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp) * Knn_inv*(mu_temp + L_temp*epsilon)));
-    
     %% update the primal variable
     %compute the stochastic gradients w.r.p.t theta 
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
-    p_alpha_v_w = 1/(power(2*3.14159,n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
-    log_p_q_1 = 0;
-    for j=1:n
-        if j<=n_test
-            continue;% During training, the test data is discarded due to lack of labels.
-        end
-        log_p_q_1 = log_p_q_1 - log(1+exp(-label(j,:)*(mu_temp(j)+L_temp(j,:)*epsilon)));
-    end
-    log_p_q_2 = -1*(n/2*log(2*3.14159)+1/2*log(det(L_temp*L_temp'))) - 1/2*(epsilon'*epsilon);
-    log_p_q = log_p_q_1  - log_p_q_2;
-    g_v_w =  [p_alpha_v_w log_p_q];
 
     nabla_g1_theta_temp_mu = zeros(n,1);
     for i=1:n
@@ -112,24 +104,18 @@ for t=1:T
         end
     end    
     
-    nabla_g1_theta = 1/((2*3.14159)^(n/2)*sqrt(Knn_det))*exp(-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon))*(-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
-    
-    nabla_g2_theta_I1 = [zeros(n_test,1); label(n_test+1:n,:) ./ (1+exp(label(n_test+1:n,:) .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(label(n_test+1:n,:) ./ (1+exp(label(n_test+1:n,:) .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
+    temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
+    log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*log(Knn_det)-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
+
+    nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
     nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
     %the third and fourth items of gradient in Step 5.
-    nabla_g_y_theta_g = y(1,:)*nabla_g1_theta+y(2,:)*nabla_g2_theta;
-    
-    %nabla_g_y_theta_g_temp =  y(1,:)*nabla_g1_theta;%for test
-    
-    %nabla_f_star_theta_temp = 1 / (w1(1,:) * (1 ./ (1+exp(-1*w2*epsion-b2))));
-    %the fifth item of gradeint in Step 5
-    %nabla_f_star_epsilon = nabla_f_star_epsilon_temp * sum(repmat(w1(1,:),num_nodes_nn,1) .* w2' .* repmat(transpose(exp(w2*epsilon+b2) ./ ((1+exp(w2*epsilon+b2)) .^ 2)),n,1),2);
-    
+    nabla_g_y_theta_g = exp(log(y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
     
     % update rule for the primal variable: theta
-    alpha = alpha_0 /sqrt(t);
-    %theta = theta - alpha*(nabla_g_y_theta_g - nabla_f_star_epsilon);
+    %alpha = alpha_0 /sqrt(t);
+    alpha = alpha_0;
     theta = theta - alpha*nabla_g_y_theta_g;
     theta_sequence(:,t)  = theta;
     
@@ -139,48 +125,30 @@ for t=1:T
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
-    p_alpha_v_w = 1/(power((2*3.14159),n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
-    log_p_q_1 = 0;
-    for j=1:n
-        if j<=n_test
-            continue;% During training, the test data is discarded due to lack of labels.
-        end
-        %% for numerical stability
-        temp = -label(j,:)*(mu_temp(j)+L_temp(j,:)*epsilon);
-        if temp>100
-            log_p_q_1 = log_p_q_1 - (temp + log(1+exp(-1*temp)));
-        else
-            log_p_q_1 = log_p_q_1 - log(1+exp(temp));
-        end
-        %disp(log_p_q_1);
-    end
-    log_p_q_2 = -1*(n/2*log(2*3.14159)+1/2*log(det(L_temp*transpose(L_temp)))) - 1/2*(epsilon'*epsilon);
-    log_p_q = log_p_q_1  - log_p_q_2;
-    g_v_w =  [p_alpha_v_w log_p_q];
+    log_p_alpha_v_w = log(1/(power(2*3.14159,n/2) * sqrt(Knn_det)))+(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
      
-    nabla_f_star_temp = 1 / (w1(1,:)*(1 ./ (1+ exp(-1*(w2*epsilon + b2))))+b1(1,:));
-    nabla_f_star_w1 = nabla_f_star_temp*[ transpose(1 ./ (1+exp(-1*(w2*epsilon+b2)))); zeros(1,num_nodes_nn)];%2 x num_nodes_nn
-    nabla_f_star_w2 = nabla_f_star_temp * repmat(exp(w2*epsilon+b2) ./ ((1+exp(w2*epsilon+b2)) .^ 2), 1,n) .* repmat(transpose(w1(1,:)),1,n) .* repmat(epsilon',num_nodes_nn,1);
-    nabla_f_star_b1 = [nabla_f_star_temp; 0];
-    nabla_f_star_b2 = nabla_f_star_temp * transpose(w1(1,:)) .* (exp(w2*epsilon+b2) ./ ((1+exp(w2*epsilon+b2)) .^2) );
+    nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
+    %approximate essential_temp = 1/y+g_v_w(1,1);
+    %if exp(log_p_alpha_v_w+log(y)) >1e
+     %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
+    %else
+        essential_temp = exp(log_p_alpha_v_w + log(1+exp(-log(y)-log_p_alpha_v_w)));
+    %end
+    nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     
-    nabla_g_y_g1_temp = g_v_w(1,1)* (1 ./ (1+exp(-1*(w2*epsilon+b2))));
-    nabla_g_y_g2_temp = g_v_w(1,2)* (1 ./ (1+exp(-1*(w2*epsilon+b2))));    
-    nabla_g_y_w1 = [nabla_g_y_g1_temp'; nabla_g_y_g2_temp'] ;% 2 x num_nodes_nn
+    nabla_g_y_w2_temp = w1' .* ((exp(-1*(w2*epsilon+b2))) ./ ((1+(exp(-1*(w2*epsilon+b2)))) .^ 2)); 
+    nabla_g_y_w2 = essential_temp*(repmat(nabla_g_y_w2_temp,1,n) .* repmat(epsilon',num_nodes_nn,1));
     
-    nabla_g_y_w2_temp_g1 = g_v_w(1,1)* transpose(w1(1,:)) .* (exp(w2*epsilon+b2)) ./ ((1+exp(w2*epsilon+b2)) .^ 2);
-    nabla_g_y_w2_temp_g2 = g_v_w(1,2) * transpose(w1(2,:)) .* (exp(w2*epsilon+b2)) ./ ((1+exp(w2*epsilon+b2)) .^ 2);
-    nabla_g_y_w2 = repmat(nabla_g_y_w2_temp_g1 + nabla_g_y_w2_temp_g2,1,n) .* repmat(epsilon',num_nodes_nn,1);
-    
-    nabla_g_y_b1 = [g_v_w(1,1);g_v_w(1,2)];
-    nabla_g_y_b2 = repmat(g_v_w(1,1),num_nodes_nn,1) .* transpose(w1(1,:)) .* exp(w2*epsilon+b2) ./ ((1+exp(w2*epsilon+b2)) .^ 2) + repmat(g_v_w(1,2),num_nodes_nn,1) .* transpose(w1(2,:)) .* exp(w2*epsilon+b2) ./ ((1+exp(w2*epsilon+b2)) .^ 2);
-    
+    nabla_g_y_b1 = essential_temp;
+    nabla_g_y_b2_temp = w1' .* exp(-1*(w2*epsilon+b2)) ./ ((1+exp(-1*(w2*epsilon+b2))) .^ 2);
+    nabla_g_y_b2 = essential_temp*nabla_g_y_b2_temp;
+    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     % update rule for the dual variable: y
     beta = beta_0/sqrt(t);
-    w1 = w1+beta*(nabla_g_y_w1 - nabla_f_star_w1);
-    w2 = w2+beta*(nabla_g_y_w2 - nabla_f_star_w2);
-    b1 = b1+beta*(nabla_g_y_b1 - nabla_f_star_b1);
-    b2 = b2+beta*(nabla_g_y_b2 - nabla_f_star_b2);
+    w1 = w1+beta*nabla_g_y_w1;
+    w2 = w2+beta*nabla_g_y_w2;
+    b1 = b1+beta*nabla_g_y_b1;
+    b2 = b2+beta*nabla_g_y_b2;
     %% evaluate loss: for train data and test data
     theta_avg = 1/t*sum(theta_sequence,2);
     mu_temp = theta_avg(1:n,:);
@@ -204,6 +172,8 @@ for t=1:T
     disp('be careful!');
     
 end
+u_save = mean(u_save,2);
+save('u_save.mat','u_save');
 save('train_loss.mat','train_loss');
 save('test_loss.mat','test_loss');
 %plot the convergence of the loss function 

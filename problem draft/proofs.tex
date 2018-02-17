@@ -96,20 +96,32 @@
         \State $g(\theta) = [P_{\alpha}(\v|\w), \log\frac{P(D|\v)}{q(\v|\theta)}]$.
         \State $\y=\e_1 Sigmoid( \e_2 \epsilon + \b_2) + \b_1$.
         \State \textbf{update the primal variable:} 
-        \State $\Delta \theta = \frac{\partial g_1(\theta) }{\partial \theta} \y_1 + \frac{\partial g_2(\theta) }{\partial \theta} \y_2$.
+        \State $\Delta \theta = \frac{\partial g_1(\theta) }{\partial \theta} \y - \frac{\partial g_2(\theta) }{\partial \theta}$.
         \State $\theta = \theta - \alpha \Delta \theta$.
         \State \textbf{update the dual variable:} 
-        \State $\e_1 = \e_1 + \beta \left (g(\theta)\frac{\partial \y}{\partial \e_1} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \e_1} \right)$.
-        \State $\e_2 = \e_2 + \beta \left (g(\theta)\frac{\partial \y}{\partial \e_2} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \e_2} \right)$.
-        \State $\b_1 = \b_1 + \beta \left ( g(\theta)\frac{\partial \y}{\partial \b_1} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \b_1}\right)$.
-        \State $\b_2 = \b_2 + \beta \left ( g(\theta)\frac{\partial \y}{\partial \b_2} - \nabla f^{\ast}(\y) \frac{\partial \y}{\partial \b_2}\right)$.
+        \State $\e_1 = \e_1 + \beta \left (g_1(\theta) + 1/y \right)\frac{\partial \y}{\partial \e_1}$.
+        \State $\e_2 = \e_2 + \beta \left (g_1(\theta) + 1/y \right)\frac{\partial \y}{\partial \e_2} $.
+        \State $\b_1 = \b_1 + \beta \left ( g_1(\theta) + 1/y\right)\frac{\partial \y}{\partial \b_1}$.
+        \State $\b_2 = \b_2 + \beta \left ( g(\theta) + 1/y \right)\frac{\partial \y}{\partial \b_2}$.
         \EndFor
     \end{algorithmic}
 \end{algorithm}
 
 
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+g2 = \log \frac{p(\D|\v)}{q(\v|\theta)} = \sum_i (-\log (1+\exp(r(i)(\mu_i+L_i\epsilon))))+\log(|LL^{T}|))
+\end{eqnarray}
 
 
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial q(\v|\theta)}{\partial L} =  (L^{T})^{-1}
+\end{eqnarray}
 
 
 

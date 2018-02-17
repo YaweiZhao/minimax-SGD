@@ -17,22 +17,22 @@ training_data = data(n_test+1:n,2:d);
 [n_train,d] = size(training_data);
 
 %% initialize variables
-T = 2000;
+T = 100;
 alpha_0 = 1e-3;% learning rate for the primal update
-beta_0 = 1e-1;%learning rate for the dual update
+beta_0 = 1e-3;%learning rate for the dual update
 %alpha_0 = 2e-2;% learning rate for the primal update
 %beta_0 = 1e-4;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 %theta = ones(n+n*n,1);%primal variable, mu + L
-theta = [rand(n,1); 5e-2*reshape(eye(n),n*n,1)];
+theta = [rand(n,1); 1e-2*reshape(eye(n),n*n,1)];
 num_nodes_nn = fix(n);
 %w1 = [1e15*rand(1,num_nodes_nn); rand(1,num_nodes_nn)];
-w1 = 1e15*rand(1,num_nodes_nn);
-w2 = 1e-22*rand(num_nodes_nn,n);
-b1 = 1e15;
-b2 = 1e-22*ones(num_nodes_nn,1);
+w1 = -1e3*rand(1,num_nodes_nn);
+w2 = rand(num_nodes_nn,n);
+b1 = -1e3;
+b2 = ones(num_nodes_nn,1);
 
 
 pair_dist = zeros(n*n,1);
@@ -47,8 +47,8 @@ for i=1:n
 end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix(n*n/2));% hyper-parameter for sampling w
-sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
-%sigma_0 = 1;
+%sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
+sigma_0 = 1;
 Knn = zeros(n,n);%ARD kernel matrix
 
 %parameters are saved for classic gp classification
@@ -63,7 +63,7 @@ for t=1:T
     u = w(2:d+1,:);
     %tau = w(d+2,:);
     tau = 1e-6;
-    u_save(:,t) = u;
+    u_save(:,t) = u;%%%%NOTICE: u or 1/u
     %compute the kernel matrice
     for i=1:n
         for j=1:n
@@ -111,11 +111,11 @@ for t=1:T
     nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
     %the third and fourth items of gradient in Step 5.
-    nabla_g_y_theta_g = exp(log(y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
+    nabla_g_y_theta_g = -1*exp(log(-y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
     
     % update rule for the primal variable: theta
-    %alpha = alpha_0 /sqrt(t);
-    alpha = alpha_0;
+    alpha = alpha_0 /sqrt(t);
+    %alpha = alpha_0;
     theta = theta - alpha*nabla_g_y_theta_g;
     theta_sequence(:,t)  = theta;
     
@@ -132,7 +132,8 @@ for t=1:T
     %if exp(log_p_alpha_v_w+log(y)) >1e
      %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
     %else
-        essential_temp = exp(log_p_alpha_v_w + log(1+exp(-log(y)-log_p_alpha_v_w)));
+        %essential_temp = -1*exp(log_p_alpha_v_w + log(-1+exp(-1*(log(-y)+log_p_alpha_v_w))));%%%%%
+        essential_temp = exp(log_p_alpha_v_w)*y
     %end
     nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     

@@ -17,23 +17,29 @@ training_data = data(n_test+1:n,2:d);
 [n_train,d] = size(training_data);
 
 %% initialize variables
-T = 200;
-alpha_0 = 1;% learning rate for the primal update
-beta_0 =100;%learning rate for the dual update
-%alpha_0 = 2e-2;% learning rate for the primal update
-%beta_0 = 1e-4;%learning rate for the dual update
+T = 1000;
+alpha_0 = 1e-2;% learning rate for the primal update
+beta_0 =1;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
-%theta = ones(n+n*n,1);%primal variable, mu + L
-theta = [rand(n,1); 1e-2*reshape(eye(n),n*n,1)];
-num_nodes_nn = fix(n);
-%w1 = [1e15*rand(1,num_nodes_nn); rand(1,num_nodes_nn)];
-w1 = -1e5*rand(1,num_nodes_nn);
-w2 = rand(num_nodes_nn,n);
-b1 = -1e5;
-b2 = ones(num_nodes_nn,1);
+theta = [ones(n,1); reshape(eye(n),n*n,1)];
+%theta = load('theta.mat');
+%theta = theta.theta;
 
+num_nodes_nn = fix(n);
+w1 = -ones(1,num_nodes_nn);
+w2 = ones(num_nodes_nn,n);
+b1 = -1;
+b2 = ones(num_nodes_nn,1);
+% w1 = load('w1.mat');
+% w1 = w1.w1;
+% w2 = load('w2.mat');
+% w2 = w2.w2;
+% b1 = load('b1.mat');
+% b1 = b1.b1;
+% b2 = load('b2.mat');
+% b2 = b2.b2;
 
 pair_dist = zeros(n*n,1);
 for i=1:n
@@ -57,20 +63,22 @@ for t=1:T
     disp(t);
     %sample v, w
     logw = normrnd(mu_0,sigma_0,d+2,1);
+    %logw = normrnd(mu_0,sigma_0,d+2,1);
     w = exp(logw);
     u_0 = 1;
     %u_0 = exp(randn(1));
     u = w(2:d+1,:);
     %tau = w(d+2,:);
-    tau = 1e-6;
-    u_save(:,t) = u;%%%%NOTICE: u or 1/u
+    tau = 1e-3;
+    u_save(:,t) = u;
     %compute the kernel matrice
     for i=1:n
         for j=1:n
-            pair_diff = data(i,2:d+1) - data(j,2:d+1);
-            Knn(i,j) = u_0*exp(-1/2*pair_diff * diag(1 ./ u) * pair_diff'+ tau);
+                pair_diff = data(i,2:d+1) - data(j,2:d+1);
+                Knn(i,j) = u_0*exp(-1/2*pair_diff * diag(1 ./ u) * pair_diff')+ tau;  
         end
     end
+
     %define the auxilary matrix
     Knn_inv = inv(Knn);
     Knn_det = det(Knn);
@@ -81,7 +89,7 @@ for t=1:T
     %compute the stochastic gradients w.r.p.t theta 
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
-    L_temp = reshape(L_temp,n,n);
+    L_temp = tril(reshape(L_temp,n,n));
 
     nabla_g1_theta_temp_mu = zeros(n,1);
     for i=1:n
@@ -104,11 +112,12 @@ for t=1:T
         end
     end    
     
-    temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
+    temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(tril(nabla_g1_theta_temp_L),n*n,1)];
     log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*log(Knn_det)-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
 
-    nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
-    nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
+    nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape(tril([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)]), n*n,1)];
+    %nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
+    nabla_g2_theta_I2 = [zeros(n,1);reshape( tril(inv(L_temp')), n*n,1)];
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
     %the third and fourth items of gradient in Step 5.
     nabla_g_y_theta_g = -1*exp(log(-y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
@@ -118,14 +127,15 @@ for t=1:T
     %alpha = alpha_0;
     theta = theta - alpha*nabla_g_y_theta_g;
     theta_sequence(:,t)  = theta;
+    %theta = mean(theta_sequence,2);
     
     
     %% update the dual variable
     %compute the stochastic gradients w.r.p.t y
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
-    L_temp = reshape(L_temp,n,n);
-    log_p_alpha_v_w = log(1/(power(2*3.14159,n/2) * sqrt(Knn_det)))+(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
+    L_temp = tril(reshape(L_temp,n,n));
+    p_alpha_v_w = 1/(power(2*3.14159,n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
      
     nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
     %approximate essential_temp = 1/y+g_v_w(1,1);
@@ -133,7 +143,7 @@ for t=1:T
      %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
     %else
         %essential_temp = -1*exp(log_p_alpha_v_w + log(-1+exp(-1*(log(-y)+log_p_alpha_v_w))));%%%%%
-        essential_temp = exp(log_p_alpha_v_w)+1/y;
+        essential_temp = p_alpha_v_w+1/y;
     %end
     nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     
@@ -174,6 +184,12 @@ for t=1:T
     
 end
 u_save = mean(u_save,2);
+% save('w1.mat','w1')
+% save('w2.mat','w2')
+% save('b2.mat','b2')
+% save('b1.mat','b1')
+% save('theta.mat','theta')
+
 save('u_save.mat','u_save');
 save('train_loss.mat','train_loss');
 save('test_loss.mat','test_loss');

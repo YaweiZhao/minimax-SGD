@@ -108,20 +108,93 @@
 \end{algorithm}
 
 
+
+Objective: 
 \begin{eqnarray}
 \setlength{\abovedisplayskip}{0pt}
 \setlength{\belowdisplayskip}{0pt}
 \nonumber
-g2 = \log \frac{p(\D|\v)}{q(\v|\theta)} = \sum_i (-\log (1+\exp(r(i)(\mu_i+L_i\epsilon))))+\log(|LL^{T}|))
+\min \mathcal{L}(\theta) = \min_{g_{\theta}}\max_{\y_v} g_1(\theta)\y_v + 1+ \log(-\y_v) - g_2(\theta)
 \end{eqnarray}
+
+Gradients w.r.t the primal variables:
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \mathcal{L}(\theta)}{\partial \theta} &=& \left( \frac{\partial \mathcal{L}(\theta)}{\partial \mu}, \frac{\partial \mathcal{L}(\theta)}{\partial L} \right)^T.
+\end{eqnarray} Here,
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \mathcal{L}(\theta)}{\partial \mu} &=& \y_v \frac{\partial g_1(\theta)}{\partial \mu} - \frac{\partial g_2(\theta)}{\partial \mu} \\ \nonumber
+&=& \y_v \frac{\partial g_1(\theta)}{\partial \mu} - \left( \frac{\partial \log P(\D|\v)}{\partial \mu} - \frac{\partial \log q(\v|\theta)}{\partial \mu} \right)
+\end{eqnarray} where
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial g_1(\theta)}{\partial \mu} = \frac{\partial P_{\alpha}(\v|\w)}{\partial \mu} =  \exp\left(-\frac{1}{2}(\mu+L\epsilon)^T K^{-1} (\mu+L\epsilon)\right) K^{-1}(\mu+L\epsilon),
+\end{eqnarray}
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log P(\D|\v)}{\partial \mu} = \left( \mathbf{0}_{1 \times n_{test}}, \left [ \frac{y_i}{1+\exp(y_i(\mu_i+L_i\epsilon))} \right]_{i: n_{test}+1->n}  \right )^T
+\end{eqnarray}
+
+
 
 
 \begin{eqnarray}
 \setlength{\abovedisplayskip}{0pt}
 \setlength{\belowdisplayskip}{0pt}
 \nonumber
-\frac{\partial q(\v|\theta)}{\partial L} =  (L^{T})^{-1}
+\frac{\partial \log q(\v|\theta)}{\partial \mu} = \textbf{0}
 \end{eqnarray}
+
+Besides,
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \mathcal{L}(\theta)}{\partial L} &=& \y_v \frac{\partial g_1(\theta)}{\partial L} - \frac{\partial g_2(\theta)}{\partial L} \\ \nonumber
+&=& \y_v \frac{\partial g_1(\theta)}{\partial L} - \left( \frac{\partial \log P(\D|\v)}{\partial L} - \frac{\partial \log q(\v|\theta)}{\partial L} \right)
+\end{eqnarray} where
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial g_1(\theta)}{\partial L} = \frac{P_{\alpha}(\v|\w)}{\partial L} = \exp\left(-\frac{1}{2}(\mu+L\epsilon)^T K^{-1} (\mu+L\epsilon)\right) \frac{\partial (\mu+L\epsilon)^T K^{-1} (\mu+L\epsilon)}{\partial L},
+\end{eqnarray}
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log P(\D|\v)}{\partial L} = \left( \mathbf{0}_{n_{test}\times n}, \left[ \frac{y_i}{1+\exp(y_i(\mu_i+L_i\epsilon))} \epsilon^T \right]_{i: n_{test}+1->n}  \right )^T
+\end{eqnarray}
+
+
+
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log q(\v|\theta)}{\partial L} = (L^T)^{-1}
+\end{eqnarray}
+
+
+
+
+
+
+
+
+
 
 
 

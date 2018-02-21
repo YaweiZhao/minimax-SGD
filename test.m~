@@ -4,7 +4,7 @@ rng('default');
 data = load('./heart.mat');
 data = data.data;
 data = data(1:200,:);
-[n,d] = size(data);
+data[n,d] = size(data);
 n_test = fix(n/5);%used to test our algo.
 label = data(1:n,1);
 test_label = data(1:n_test,1);
@@ -38,13 +38,21 @@ train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 
 
+
+
+
+
+
+
+
+
+
 num_nodes_nn = fix(n);
 
 w1 = -ones(1,num_nodes_nn);
 w2 = ones(num_nodes_nn,n);
 b1 = -1;
 b2 = ones(num_nodes_nn,1);
-
 %w1 = load('w11.mat');
 %w1 = w1.w1;
 %w2 = load('w22.mat');
@@ -60,6 +68,7 @@ for i=1:n
         if i==j
             continue;
         end
+        %pair_dist((i-1)*n+j,:) = log(norm(training_data(i,:)-training_data(j,:)));
         pair_dist((i-1)*n+j,:) = log(norm(data(i,2:d+1)-data(j,2:d+1)));
     end
 end
@@ -126,6 +135,7 @@ for t=1:T
     for i=1:n
         for j=1:n
             if i==j
+                 %nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i);
                  nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i)+(mu_temp(i,:)+L_temp(i,:)*epsilon)*Knn_inv(i,i);
             else
                 nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon);
@@ -150,7 +160,7 @@ for t=1:T
     nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
     nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
-    %the gradient w.r.t theta
+    %the third and fourth items of gradient in Step 5.
     %nabla_g_y_theta_g = -1*exp(log(-y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
     nabla_g_y_theta_g = y*exp(log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
     
@@ -168,7 +178,7 @@ for t=1:T
     
     
     %% update the dual variable
-    %compute the stochastic gradients w.r.t y
+    %compute the stochastic gradients w.r.p.t y
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
@@ -230,5 +240,8 @@ end
 %save('u_save.mat','u_save');
 save('train_loss.mat','train_loss');
 save('test_loss.mat','test_loss');
-
+%plot the convergence of the loss function 
+% plot(1:T,train_loss);
+% xlabel('number of iterations');
+% ylabel('loss on training data')
 

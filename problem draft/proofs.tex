@@ -190,6 +190,65 @@ Besides,
 
 
 
+\section{Experimental details}
+
+\textbf{Initialize:}
+
+\# training data: $40$
+
+\# test data: $10$
+
+\# iterations: $1000$
+
+\# learning rate (primal): $10^{-3}$
+
+\# learning rate (dual): $10^{-3}$
+
+$\mu_0$: median of pair-wise distance
+
+$u_0$: $1$
+
+$\sigma_0$: $1$
+
+$\tau$: $10^{-6}$
+
+$\epsilon$: multivariate $N(0,1)$
+
+$\log w$: multivariate $N(0,1)$
+
+$\mu$: zeros$(n,1)$
+
+$L$: Identity matrix: eye(n)
+
+dual variable $\y_{\phi} = \e_1 \frac{1}{1+\exp(-\e_2\epsilon-\b_2)} + \b_1$
+
+\# of hidden layers: $m=n$
+
+$\e_1 = -1*ones(1,m)$
+
+$\e_2 = ones(m,n)$
+
+$\b_1 = 1$
+
+$\b_2 = ones(m,1)$
+
+
+\textbf{Output:}
+
+$\y_{\phi}$: $9.2\times 10^{6}$
+
+$\mu$: $<10^{-26}$ for elements corresponding to test data, $>0.02$ for elements corresponding to training data
+
+train likelyhold ($\log$): $-0.682443$ its absolute value is decreasing
+
+test likelyhold ($\log$): $-0.693147$ its absolute value is a constant
+
+
+
+
+
+
+
 
 
 

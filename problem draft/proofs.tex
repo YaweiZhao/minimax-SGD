@@ -1,0 +1,265 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+% \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading nips_2016
+%
+% to avoid loading the natbib package, add option nonatbib:
+% \usepackage[nonatbib]{nips_2016}
+
+\usepackage{nips_2016}
+
+% to compile a camera-ready version, add the [final] option, e.g.:
+% \usepackage[final]{nips_2016}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage[colorlinks=true]{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+
+\usepackage{cite}
+\usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{tabularx}
+\usepackage{pifont}
+\usepackage[noend]{algpseudocode}
+\usepackage{bm}
+\usepackage{ulem}
+\usepackage{array}
+\usepackage{balance}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\newcommand\algotext[1]{\end{algorithmic}#1\begin{algorithmic}[1]}
+
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}
+\newcommand{\argmax}{\operatornamewithlimits{argmax}}
+
+\def\e{{\bf e}}
+\def\a{{\bf a}}
+\def\b{{\bf b}}
+\def\Q{{\bf Q}}
+\def\u{{\bf u}}
+\def\v{{\bf v}}
+\def\x{{\bf x}}
+\def\y{{\bf y}}
+\def\z{{\bf z}}
+\def\w{{\bf w}}
+\def\r{{\bf r}}
+\def\s{{\bf s}}
+\def\1{{\bf 1}}
+\def\0{{\bf 0}}
+\def\D{{\bf D}}
+\def\d{{\mathrm{d}}}
+\def\E{{\mathbb{E}}}
+
+
+\def\A{\mathcal{A}}
+\def\S{\mathcal{S}}
+\def\Proj{\mathrm{Proj}}
+\begin{document}
+\title{draft}
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+&&L(\theta) =  \int  \log(E_{p_{\alpha}(\w)}(p_{\alpha}(\v|\w))) q(\v|\theta) \d \v + \int \log\frac{p_{\alpha}(\D|\v)}{q(\v|\theta)} q(\v|\theta) \d \v \\ \nonumber
+&=& \int  \log\left( \int p_{\alpha}(\v|\w) p_{\alpha}(\w)\d\w \right)  q(\v|\theta) \d\v + \int \log\frac{p_{\alpha}(\D|\v)}{q(\v|\theta)} q(\v|\theta) \d \v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|^{1/2}}e^{-\frac{1}{2}(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-\frac{1}{2}(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|^{1/2}}e^{-\frac{1}{2}\epsilon^T \epsilon} \d\v \\ \nonumber
+&+& \int \log\frac{p_{\alpha}(\D|\v)}{q(\v|\theta)} q(\v|\theta) \d\v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|^{1/2}}e^{-\frac{1}{2}(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-\frac{1}{2}(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|^{1/2}}e^{-\frac{1}{2}\epsilon^T \epsilon} \d\v \\ \nonumber
+&+& \int (\log p_{\alpha}(\D|\v) - \log q(\v|\theta)) q(\v|\theta) \d\v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|}e^{-(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|}e^{-\epsilon^T \epsilon} \d\v \\ \nonumber
+&+& \int \left( \sum\limits_{i=1}^{n-n_{test}}(-\log(1+e^{-r_i(\mu_i+L_i\epsilon)}) + \log|LL^{T}|+\epsilon^{T}\epsilon) \right)\frac{1}{|LL^T|}e^{-\epsilon^{T}\epsilon} \d\v \\ \nonumber
+&=& \int  \log\left( \int \frac{1}{|K_{nn}|}e^{-(\mu+L\epsilon)K_{nn}^{-1}(\mu+L\epsilon)} e^{-(\log \w - \mu_0)(\e_0^2)^{-1}(\log \w - \mu_0)}\d\w \right)\frac{1}{|LL^T|}e^{-\epsilon^T \epsilon} \d (\mu+L\epsilon) \\ \nonumber
+&+& \int \left( \sum\limits_{i=1}^{n-n_{test}}(-\log(1+e^{-r_i(\mu_i+L_i\epsilon)}) + \log|LL^{T}|+\epsilon^{T}\epsilon) \right)\frac{1}{|LL^T|}e^{-\epsilon^{T}\epsilon} \d(\mu+L\epsilon) \\ \nonumber
+\end{eqnarray}
+
+\begin{algorithm}[!t]
+    \caption{Minimax SGD}
+    \label{algorithm_vrkm_plus_plus}
+    \begin{algorithmic}[1]
+        \State initialize all hyper-parameters, and initialize the primal variable $\theta$ and the dual variables $\w_1$ and $\w_2$.
+        \For {$t=1:T$}
+        \State sample $\epsilon$ to compute $\v=\mu+L\epsilon$.
+        \State sample $\w$ to compute ARD kernel matrix.
+        \State $g(\theta) = [P_{\alpha}(\v|\w), \log\frac{P(D|\v)}{q(\v|\theta)}]$.
+        \State $\y=\e_1 Sigmoid( \e_2 \epsilon + \b_2) + \b_1$.
+        \State \textbf{update the primal variable:} 
+        \State $\Delta \theta = \frac{\partial g_1(\theta) }{\partial \theta} \y - \frac{\partial g_2(\theta) }{\partial \theta}$.
+        \State $\theta = \theta - \alpha \Delta \theta$.
+        \State \textbf{update the dual variable:} 
+        \State $\e_1 = \e_1 + \beta \left (g_1(\theta) + 1/y \right)\frac{\partial \y}{\partial \e_1}$.
+        \State $\e_2 = \e_2 + \beta \left (g_1(\theta) + 1/y \right)\frac{\partial \y}{\partial \e_2} $.
+        \State $\b_1 = \b_1 + \beta \left ( g_1(\theta) + 1/y\right)\frac{\partial \y}{\partial \b_1}$.
+        \State $\b_2 = \b_2 + \beta \left ( g(\theta) + 1/y \right)\frac{\partial \y}{\partial \b_2}$.
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+Objective: 
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\min \mathcal{L}(\theta) = \min_{g_{\theta}}\max_{\y_v} g_1(\theta)\y_v + 1+ \log(-\y_v) - g_2(\theta)
+\end{eqnarray}
+
+Gradients w.r.t the primal variables:
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \mathcal{L}(\theta)}{\partial \theta} &=& \left( \frac{\partial \mathcal{L}(\theta)}{\partial \mu}, \frac{\partial \mathcal{L}(\theta)}{\partial L} \right)^T.
+\end{eqnarray} Here,
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \mathcal{L}(\theta)}{\partial \mu} &=& \y_v \frac{\partial g_1(\theta)}{\partial \mu} - \frac{\partial g_2(\theta)}{\partial \mu} \\ \nonumber
+&=& \y_v \frac{\partial g_1(\theta)}{\partial \mu} - \left( \frac{\partial \log P(\D|\v)}{\partial \mu} - \frac{\partial \log q(\v|\theta)}{\partial \mu} \right)
+\end{eqnarray} where
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial g_1(\theta)}{\partial \mu} = \frac{\partial P_{\alpha}(\v|\w)}{\partial \mu} =  \exp\left(-\frac{1}{2}(\mu+L\epsilon)^T K^{-1} (\mu+L\epsilon)\right) K^{-1}(\mu+L\epsilon),
+\end{eqnarray}
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log P(\D|\v)}{\partial \mu} = \left( \mathbf{0}_{1 \times n_{test}}, \left [ \frac{y_i}{1+\exp(y_i(\mu_i+L_i\epsilon))} \right]_{i: n_{test}+1->n}  \right )^T
+\end{eqnarray}
+
+
+
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log q(\v|\theta)}{\partial \mu} = \textbf{0}
+\end{eqnarray}
+
+Besides,
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \mathcal{L}(\theta)}{\partial L} &=& \y_v \frac{\partial g_1(\theta)}{\partial L} - \frac{\partial g_2(\theta)}{\partial L} \\ \nonumber
+&=& \y_v \frac{\partial g_1(\theta)}{\partial L} - \left( \frac{\partial \log P(\D|\v)}{\partial L} - \frac{\partial \log q(\v|\theta)}{\partial L} \right)
+\end{eqnarray} where
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial g_1(\theta)}{\partial L} = \frac{P_{\alpha}(\v|\w)}{\partial L} = \exp\left(-\frac{1}{2}(\mu+L\epsilon)^T K^{-1} (\mu+L\epsilon)\right) \frac{\partial (\mu+L\epsilon)^T K^{-1} (\mu+L\epsilon)}{\partial L},
+\end{eqnarray}
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log P(\D|\v)}{\partial L} = \left( \mathbf{0}_{n_{test}\times n}, \left[ \frac{y_i}{1+\exp(y_i(\mu_i+L_i\epsilon))} \epsilon^T \right]_{i: n_{test}+1->n}  \right )^T
+\end{eqnarray}
+
+
+
+
+\begin{eqnarray}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\nonumber
+\frac{\partial \log q(\v|\theta)}{\partial L} = (L^T)^{-1}
+\end{eqnarray}
+
+
+
+
+\section{Experimental details}
+
+\textbf{Initialize:}
+
+\# training data: $40$
+
+\# test data: $10$
+
+\# iterations: $1000$
+
+\# learning rate (primal): $10^{-3}$
+
+\# learning rate (dual): $10^{-3}$
+
+$\mu_0$: median of pair-wise distance
+
+$u_0$: $1$
+
+$\sigma_0$: $1$
+
+$\tau$: $10^{-6}$
+
+$\epsilon$: multivariate $N(0,1)$
+
+$\log w$: multivariate $N(0,1)$
+
+$\mu$: zeros$(n,1)$
+
+$L$: Identity matrix: eye(n)
+
+dual variable $\y_{\phi} = \e_1 \frac{1}{1+\exp(-\e_2\epsilon-\b_2)} + \b_1$
+
+\# of hidden layers: $m=n$
+
+$\e_1 = -1*ones(1,m)$
+
+$\e_2 = ones(m,n)$
+
+$\b_1 = 1$
+
+$\b_2 = ones(m,1)$
+
+
+\textbf{Output:}
+
+$\y_{\phi}$: $9.2\times 10^{6}$
+
+$\mu$: $<10^{-26}$ for elements corresponding to test data, $>0.02$ for elements corresponding to training data
+
+train likelyhold ($\log$): $-0.682443$ its absolute value is decreasing
+
+test likelyhold ($\log$): $-0.693147$ its absolute value is a constant
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section*{References}
+
+\bibliography{reference}
+\bibliographystyle{nips}
+
+\end{document}

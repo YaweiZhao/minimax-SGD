@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =100000;
+T =10000;
 
 %Ada-delta optimization method
 rho = 0.95; eepsilon = 1e-6;
@@ -79,7 +79,7 @@ end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix((n*n-n)/2));% hyper-parameter for sampling w
 %sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
-sigma_0 = 1;
+%sigma_0 = 1;
 
 %%initialize mu and L
 %theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
@@ -108,14 +108,11 @@ p_alpha_v_w_expectation = 1e-25*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-
 u_save = zeros(d, T);
 for t=1:T
     disp(t);
-    if t==200
-        disp('debug');
-    end
     Knn = zeros(n,n);%ARD kernel matrix
     %sample v, w
-    logw = normrnd(mu_0,sigma_0,d+2,1);
-    w = exp(logw);
-    %w = exp(mu_0*ones(d+2,1));
+    %logw = normrnd(mu_0,sigma_0,d+2,1);
+    %w = exp(logw);
+    w = exp(mu_0*ones(d+2,1));
     u_0 = 1;%%%NOTICE
     %u_0 = exp(randn(1));
     u = w(2:d+1,:);

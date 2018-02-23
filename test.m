@@ -294,11 +294,11 @@ for t=1:T
     
 end
 u_save = mean(u_save,2);
-% save('w1.mat','w1')
-% save('w2.mat','w2')
-% save('b2.mat','b2')
-% save('b1.mat','b1')
- %save('theta.mat','theta')
+ save('w1.mat','w1')
+ save('w2.mat','w2')
+ save('b2.mat','b2')
+ save('b1.mat','b1')
+ save('theta.mat','theta')
 
 %save('u_save.mat','u_save');
 save('train_loss.mat','train_loss');

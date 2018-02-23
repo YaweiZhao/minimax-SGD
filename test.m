@@ -5,13 +5,13 @@ data = data.data;
 [n,d] = size(data);
 label = data(:,1);
 %label(label==2) = -1;% all the labels are +1 or -1.
-training_data = data(1:fix(n/5),2:d);
+training_data = data(1:fix(n),2:d);
 %training_data = transpose(mapstd(training_data'));
 %training_data = [training_data ones(n,1)];% add 1-offset
 [n,d] = size(training_data);
 
 %% initialize variables
-T = 200;
+T = 20;
 alpha_0 = 1e-1;% learning rate for the primal update
 beta_0 = 1e-5;%learning rate for the dual update
 theta_sequence = zeros(n+n*n,T);
@@ -46,7 +46,7 @@ for t=1:T
     u_0 = 1;
     u = w(2:d+1,:);
     %tau = w(d+2,:);
-    tau = 1e-6;
+    tau = 1e-7;
     %compute the kernel matrice
     for i=1:n
         for j=1:n

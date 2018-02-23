@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T = 3000000;
+T =50000;
 
 %Ada-delta optimization method
 rho = 0.95; eepsilon = 1e-6;

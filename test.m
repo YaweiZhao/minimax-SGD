@@ -10,12 +10,8 @@ label = data(1:n,1);
 test_label = data(1:n_test,1);
 training_label = label(n_test+1:n,:);
 %label(label==2) = -1;% all the labels are +1 or -1.
-<<<<<<< HEAD
-training_data = data(1:fix(n),2:d);
-=======
 test_data = data(1:n_test,2:d);
 training_data = data(n_test+1:n,2:d);
->>>>>>> 361342866ba410637f0c8088a7766d62a3afc522
 %training_data = transpose(mapstd(training_data'));
 %training_data = [training_data ones(n,1)];% add 1-offset
 [n_train,d] = size(training_data);
@@ -34,15 +30,6 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-<<<<<<< HEAD
-T = 20;
-alpha_0 = 1e-1;% learning rate for the primal update
-beta_0 = 1e-5;%learning rate for the dual update
-theta_sequence = zeros(n+n*n,T);
-loss = zeros(T,1);
-theta = rand(n+n*n,1);%primal variable, mu + L
-y = ones(2,1);%dual variable
-=======
 T = 3000000;
 
 %Ada-delta optimization method
@@ -80,7 +67,6 @@ b2 = rand(num_nodes_nn,1);
 %b2 = load('b22.mat');
 %b2 = b2.b2;
 
->>>>>>> 361342866ba410637f0c8088a7766d62a3afc522
 pair_dist = zeros(n*n,1);
 for i=1:n
     for j=1:n
@@ -135,12 +121,8 @@ for t=1:T
     u = w(2:d+1,:);
     %u = ones(d,1);
     %tau = w(d+2,:);
-<<<<<<< HEAD
-    tau = 1e-7;
-=======
     tau = 1e-3;
     u_save(:,t) = u;
->>>>>>> 361342866ba410637f0c8088a7766d62a3afc522
     %compute the kernel matrice
     for i=1:n
         for j=1:n

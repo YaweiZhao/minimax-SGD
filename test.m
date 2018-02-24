@@ -42,7 +42,7 @@ b2 = rand(num_nodes_nn,1);
 
 
 %Ada-delta optimization method
-rho = 0.95; eepsilon = 1e-6;
+rho = 0.9; eepsilon = 1e-6;
 E_g_square_old = zeros(n+n*n,1);
 E_delta_x_square_old = zeros(n+n*n,1);
 E_g_square_old_dual_w1 = zeros(1,num_nodes_nn);

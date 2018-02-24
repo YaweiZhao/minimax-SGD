@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =500;
+T =1000;
 
 %Ada-delta optimization method
 rho = 0.95; eepsilon = 1e-6;
@@ -51,7 +51,7 @@ E_delta_x_square_old_dual_b2 = 0;
 %theta_sequence = zeros(n+n*n,T);
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
-num_nodes_nn = fix(10*n);
+num_nodes_nn = fix(n);
 
 w1 = -rand(1,num_nodes_nn);
 w2 = rand(num_nodes_nn,n);
@@ -103,7 +103,7 @@ L_temp = theta(n+1:n+n*n,:);
 L_temp = reshape(L_temp,n,n);
 %to match the y and the gradient of g1
 %p_alpha_v_w_expectation = exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_expectation_inv*(mu_temp+L_temp*epsilon));
-p_alpha_v_w_expectation = 1e-25*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
+p_alpha_v_w_expectation = 1e-1*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
 %parameters are saved for using in classic gp classification
 u_save = zeros(d, T);
 for t=1:T
@@ -138,8 +138,7 @@ for t=1:T
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
-    %y = 1/p_alpha_v_w_expectation*w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+    y = w1 * epsilon +b1;
 
 
     nabla_g1_theta_temp_mu = zeros(n,1);
@@ -205,58 +204,52 @@ for t=1:T
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
-    %y = 1/p_alpha_v_w_expectation*w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+    y = w1 * epsilon + b1;
     %p_alpha_v_w = 1/(power(2*3.14159,n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
     p_alpha_v_w = exp(-n/2*log(2*3.14159)-1/2*Knn_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon));
     
-    nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
-    %approximate essential_temp = 1/y+g_v_w(1,1);
-    %if exp(log_p_alpha_v_w+log(y)) >1e
-     %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
-    %else
-        %essential_temp = -1*exp(log_p_alpha_v_w + log(-1+exp(-1*(log(-y)+log_p_alpha_v_w))));%%%%%
-        essential_temp = 1/p_alpha_v_w_expectation*p_alpha_v_w+1/y;
-    %end
+    %nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
+    nabla_g_y_g1_temp =  epsilon;
+    essential_temp = 1/p_alpha_v_w_expectation*p_alpha_v_w+1/y;
     nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     
-    nabla_g_y_w2_temp = w1' .* ((exp(-1*(w2*epsilon+b2))) ./ ((1+(exp(-1*(w2*epsilon+b2)))) .^ 2)); 
-    nabla_g_y_w2 = essential_temp*(repmat(nabla_g_y_w2_temp,1,n) .* repmat(epsilon',num_nodes_nn,1));
+    %nabla_g_y_w2_temp = w1' .* ((exp(-1*(w2*epsilon+b2))) ./ ((1+(exp(-1*(w2*epsilon+b2)))) .^ 2)); 
+    %nabla_g_y_w2 = essential_temp*(repmat(nabla_g_y_w2_temp,1,n) .* repmat(epsilon',num_nodes_nn,1));
     
     nabla_g_y_b1 = essential_temp;
-    nabla_g_y_b2_temp = w1' .* exp(-1*(w2*epsilon+b2)) ./ ((1+exp(-1*(w2*epsilon+b2))) .^ 2);
-    nabla_g_y_b2 = essential_temp*nabla_g_y_b2_temp;
+    %nabla_g_y_b2_temp = w1' .* exp(-1*(w2*epsilon+b2)) ./ ((1+exp(-1*(w2*epsilon+b2))) .^ 2);
+    %nabla_g_y_b2 = essential_temp*nabla_g_y_b2_temp;
     
     % ada-delta method for the dual variable: y
     E_g_square_new_dual_w1 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_w1));
-    E_g_square_new_dual_w2 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_w2));
+    %E_g_square_new_dual_w2 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_w2));
     E_g_square_new_dual_b1 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_b1));
-    E_g_square_new_dual_b2 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_b2));
+    %E_g_square_new_dual_b2 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_b2));
     
     Delta_x_dual_w1 = sqrt(E_delta_x_square_old_dual_w1+eepsilon)/sqrt(E_g_square_new_dual_w1+eepsilon)*nabla_g_y_w1;
-    Delta_x_dual_w2 = sqrt(E_delta_x_square_old_dual_w2+eepsilon)/sqrt(E_g_square_new_dual_w2+eepsilon)*nabla_g_y_w2;
+    %Delta_x_dual_w2 = sqrt(E_delta_x_square_old_dual_w2+eepsilon)/sqrt(E_g_square_new_dual_w2+eepsilon)*nabla_g_y_w2;
     Delta_x_dual_b1 = sqrt(E_delta_x_square_old_dual_b1+eepsilon)/sqrt(E_g_square_new_dual_b1+eepsilon)*nabla_g_y_b1;
-    Delta_x_dual_b2 = sqrt(E_delta_x_square_old_dual_b2+eepsilon)/sqrt(E_g_square_new_dual_b2+eepsilon)*nabla_g_y_b2;
+    %Delta_x_dual_b2 = sqrt(E_delta_x_square_old_dual_b2+eepsilon)/sqrt(E_g_square_new_dual_b2+eepsilon)*nabla_g_y_b2;
     
     E_delta_x_square_new_dual_w1 = rho*E_delta_x_square_old_dual_w1 + (1-rho)*(sumsqr(Delta_x_dual_w1));
-    E_delta_x_square_new_dual_w2 = rho*E_delta_x_square_old_dual_w2 + (1-rho)*(sumsqr(Delta_x_dual_w2));
+    %E_delta_x_square_new_dual_w2 = rho*E_delta_x_square_old_dual_w2 + (1-rho)*(sumsqr(Delta_x_dual_w2));
     E_delta_x_square_new_dual_b1 = rho*E_delta_x_square_old_dual_b1 + (1-rho)*(sumsqr(Delta_x_dual_b1));
-    E_delta_x_square_new_dual_b2 = rho*E_delta_x_square_old_dual_b2 + (1-rho)*(sumsqr(Delta_x_dual_b2));
+    %E_delta_x_square_new_dual_b2 = rho*E_delta_x_square_old_dual_b2 + (1-rho)*(sumsqr(Delta_x_dual_b2));
     
     w1 = w1 + Delta_x_dual_w1;
-    w2 = w2 + Delta_x_dual_w2;
+    %w2 = w2 + Delta_x_dual_w2;
     b1 = b1 + Delta_x_dual_b1;
-    b2 = b2 + Delta_x_dual_b2;
+    %b2 = b2 + Delta_x_dual_b2;
     
     E_delta_x_square_old_dual_w1 = E_delta_x_square_new_dual_w1;
-    E_delta_x_square_old_dual_w2 = E_delta_x_square_new_dual_w2;
+    %E_delta_x_square_old_dual_w2 = E_delta_x_square_new_dual_w2;
     E_delta_x_square_old_dual_b1 = E_delta_x_square_new_dual_b1;
-    E_delta_x_square_old_dual_b2 = E_delta_x_square_new_dual_b2;
+    %E_delta_x_square_old_dual_b2 = E_delta_x_square_new_dual_b2;
     
     E_g_square_old_dual_w1 = E_g_square_new_dual_w1;
-    E_g_square_old_dual_w2 = E_g_square_new_dual_w2;
+    %E_g_square_old_dual_w2 = E_g_square_new_dual_w2;
     E_g_square_old_dual_b1 = E_g_square_new_dual_b1;
-    E_g_square_old_dual_b2 = E_g_square_new_dual_b2;
+    %E_g_square_old_dual_b2 = E_g_square_new_dual_b2;
     
     % SGD for the dual variable: y
     %beta = beta_0/sqrt(t);

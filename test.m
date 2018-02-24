@@ -33,7 +33,7 @@ training_data = data(n_test+1:n,2:d);
 T =5000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
-num_nodes_nn = fix(n/5);
+num_nodes_nn = fix(n);
 
 w1 = -rand(1,num_nodes_nn);
 w2 = rand(num_nodes_nn,n);

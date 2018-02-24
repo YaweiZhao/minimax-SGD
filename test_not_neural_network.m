@@ -105,7 +105,7 @@ L_temp = theta(n+1:n+n*n,:);
 L_temp = reshape(L_temp,n,n);
 %to match the y and the gradient of g1
 %p_alpha_v_w_expectation = exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_expectation_inv*(mu_temp+L_temp*epsilon));
-p_alpha_v_w_expectation = 1e-24*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
+p_alpha_v_w_expectation = 1e-1*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
 %parameters are saved for using in classic gp classification
 u_save = zeros(d, T);
 for t=1:T

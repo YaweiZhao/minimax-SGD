@@ -30,25 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =200000;
-
-%Ada-delta optimization method
-rho = 0.95; eepsilon = 1e-6;
-E_g_square_old = 0;
-E_delta_x_square_old = 0;
-E_g_square_old_dual_w1 = 0;
-E_g_square_old_dual_w2 = 0;
-E_g_square_old_dual_b1 = 0;
-E_g_square_old_dual_b2 = 0;
-E_delta_x_square_old_dual_w1 = 0;
-E_delta_x_square_old_dual_w2 = 0;
-E_delta_x_square_old_dual_b1 = 0;
-E_delta_x_square_old_dual_b2 = 0;
-
-%SGD optimization method
-%alpha_0 = 1e-10;% learning rate for the primal update
-%beta_0 =1e-8;%learning rate for the dual update
-%theta_sequence = zeros(n+n*n,T);
+T =5000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -57,6 +39,26 @@ w1 = -rand(1,num_nodes_nn);
 w2 = rand(num_nodes_nn,n);
 b1 = -1;
 b2 = rand(num_nodes_nn,1);
+
+%Ada-delta optimization method
+rho = 0.95; eepsilon = 1e-6;
+
+E_g_square_old = zeros(n+n*n,1);
+E_delta_x_square_old = zeros(n+n*n,1);
+E_g_square_old_dual_w1 = zeros(1,num_nodes_nn);
+E_g_square_old_dual_w2 = zeros(num_nodes_nn,n);
+E_g_square_old_dual_b1 = 0;
+E_g_square_old_dual_b2 = zeros(num_nodes_nn,1);
+E_delta_x_square_old_dual_w1 = zeros(1,num_nodes_nn);
+E_delta_x_square_old_dual_w2 = zeros(num_nodes_nn,n);
+E_delta_x_square_old_dual_b1 = 0;
+E_delta_x_square_old_dual_b2 = zeros(num_nodes_nn,1);
+
+
+%SGD optimization method
+%alpha_0 = 1e-10;% learning rate for the primal update
+%beta_0 =1e-8;%learning rate for the dual update
+%theta_sequence = zeros(n+n*n,T);
 
 %w1 = load('w11.mat');
 %w1 = w1.w1;
@@ -177,10 +179,9 @@ for t=1:T
     % update rule for the primal variable: theta
     
     %set the primal step size via ada-delta method
-    E_g_square_new = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_theta_g));
-    Delta_x = -1*sqrt(E_delta_x_square_old+eepsilon)/sqrt(E_g_square_new+eepsilon)*nabla_g_y_theta_g;
-    E_delta_x_square_new = rho*E_delta_x_square_old + (1-rho)*(sumsqr(Delta_x));
-    
+    E_g_square_new = rho*E_g_square_old + (1-rho)*(nabla_g_y_theta_g .^ 2);
+    Delta_x = -1*sqrt(E_delta_x_square_old+eepsilon) ./ sqrt(E_g_square_new+eepsilon) .* nabla_g_y_theta_g;
+    E_delta_x_square_new = rho*E_delta_x_square_old + (1-rho)*(Delta_x .^ 2);
     theta = theta + Delta_x;
     
     E_delta_x_square_old = E_delta_x_square_new;
@@ -221,19 +222,19 @@ for t=1:T
     %nabla_g_y_b2 = essential_temp*nabla_g_y_b2_temp;
     
     % ada-delta method for the dual variable: y
-    E_g_square_new_dual_w1 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_w1));
-    %E_g_square_new_dual_w2 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_w2));
-    E_g_square_new_dual_b1 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_b1));
-    %E_g_square_new_dual_b2 = rho*E_g_square_old + (1-rho)*(sumsqr(nabla_g_y_b2));
+    E_g_square_new_dual_w1 = rho*E_g_square_old_dual_w1 + (1-rho)*(nabla_g_y_w1 .^ 2);
+    %E_g_square_new_dual_w2 = rho*E_g_square_old_dual_w2 + (1-rho)*(sumsqr(nabla_g_y_w2));
+    E_g_square_new_dual_b1 = rho*E_g_square_old_dual_b1 + (1-rho)*(nabla_g_y_b1 .^ 2);
+    %E_g_square_new_dual_b2 = rho*E_g_square_old_dual_b2ls + (1-rho)*(sumsqr(nabla_g_y_b2));
     
-    Delta_x_dual_w1 = sqrt(E_delta_x_square_old_dual_w1+eepsilon)/sqrt(E_g_square_new_dual_w1+eepsilon)*nabla_g_y_w1;
+    Delta_x_dual_w1 = sqrt(E_delta_x_square_old_dual_w1+eepsilon) ./ sqrt(E_g_square_new_dual_w1+eepsilon) .* nabla_g_y_w1;
     %Delta_x_dual_w2 = sqrt(E_delta_x_square_old_dual_w2+eepsilon)/sqrt(E_g_square_new_dual_w2+eepsilon)*nabla_g_y_w2;
-    Delta_x_dual_b1 = sqrt(E_delta_x_square_old_dual_b1+eepsilon)/sqrt(E_g_square_new_dual_b1+eepsilon)*nabla_g_y_b1;
+    Delta_x_dual_b1 = sqrt(E_delta_x_square_old_dual_b1+eepsilon) ./ sqrt(E_g_square_new_dual_b1+eepsilon) .* nabla_g_y_b1;
     %Delta_x_dual_b2 = sqrt(E_delta_x_square_old_dual_b2+eepsilon)/sqrt(E_g_square_new_dual_b2+eepsilon)*nabla_g_y_b2;
     
-    E_delta_x_square_new_dual_w1 = rho*E_delta_x_square_old_dual_w1 + (1-rho)*(sumsqr(Delta_x_dual_w1));
+    E_delta_x_square_new_dual_w1 = rho*E_delta_x_square_old_dual_w1 + (1-rho)*(Delta_x_dual_w1 .^ 2);
     %E_delta_x_square_new_dual_w2 = rho*E_delta_x_square_old_dual_w2 + (1-rho)*(sumsqr(Delta_x_dual_w2));
-    E_delta_x_square_new_dual_b1 = rho*E_delta_x_square_old_dual_b1 + (1-rho)*(sumsqr(Delta_x_dual_b1));
+    E_delta_x_square_new_dual_b1 = rho*E_delta_x_square_old_dual_b1 + (1-rho)*(Delta_x_dual_b1 .^ 2);
     %E_delta_x_square_new_dual_b2 = rho*E_delta_x_square_old_dual_b2 + (1-rho)*(sumsqr(Delta_x_dual_b2));
     
     w1 = w1 + Delta_x_dual_w1;

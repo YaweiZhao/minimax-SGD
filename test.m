@@ -30,10 +30,10 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =10000;
+T =1000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
-num_nodes_nn = fix(n);
+num_nodes_nn = fix(n/5);
 
 w1 = -rand(1,num_nodes_nn);
 w2 = rand(num_nodes_nn,n);
@@ -42,7 +42,7 @@ b2 = rand(num_nodes_nn,1);
 
 
 %Ada-delta optimization method
-rho = 0.9; eepsilon = 1e-6;
+rho = 0.95; eepsilon = 1e-6;
 E_g_square_old = zeros(n+n*n,1);
 E_delta_x_square_old = zeros(n+n*n,1);
 E_g_square_old_dual_w1 = zeros(1,num_nodes_nn);

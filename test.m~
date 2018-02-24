@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =1000;
+T =300;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -104,16 +104,16 @@ L_temp = theta(n+1:n+n*n,:);
 L_temp = reshape(L_temp,n,n);
 %to match the y and the gradient of g1
 %p_alpha_v_w_expectation = exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_expectation_inv*(mu_temp+L_temp*epsilon));
-p_alpha_v_w_expectation = 1e-20*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
+p_alpha_v_w_expectation = 1e-25*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
 %parameters are saved for using in classic gp classification
 u_save = zeros(d, T);
 for t=1:T
     disp(t);
     Knn = zeros(n,n);%ARD kernel matrix
     %sample v, w
-    logw = normrnd(mu_0,sigma_0,d+2,1);
-    w = exp(logw);
-    %w = exp(mu_0*ones(d+2,1));
+    %logw = normrnd(mu_0,sigma_0,d+2,1);
+    %w = exp(logw);
+    w = exp(mu_0*ones(d+2,1));
     u_0 = 1;%%%NOTICE
     %u_0 = exp(randn(1));
     u = w(2:d+1,:);
@@ -231,8 +231,8 @@ for t=1:T
     % ada-delta method for the dual variable: y
     E_g_square_new_dual_w1 = rho*E_g_square_old_dual_w1 + (1-rho)*(nabla_g_y_w1 .^ 2);
     E_g_square_new_dual_w2 = rho*E_g_square_old_dual_w2 + (1-rho)*(nabla_g_y_w2 .^ 2);
-    E_g_square_new_dual_b1 = rho*E_g_square_old_dual_b1 + (1-rho)*(nabla_g_y_b1 .^ 2);
-    E_g_square_new_dual_b2 = rho*E_g_square_old_dual_b2 + (1-rho)*(nabla_g_y_b2 .^ 2);
+    E_g_square_new_dual_b1 = rho*E_g_square_old + (1-rho)*(nabla_g_y_b1 .^ 2);
+    E_g_square_new_dual_b2 = rho*E_g_square_old + (1-rho)*(nabla_g_y_b2 .^ 2);
     
     Delta_x_dual_w1 = sqrt(E_delta_x_square_old_dual_w1+eepsilon) ./ sqrt(E_g_square_new_dual_w1+eepsilon) .* nabla_g_y_w1;
     Delta_x_dual_w2 = sqrt(E_delta_x_square_old_dual_w2+eepsilon) ./ sqrt(E_g_square_new_dual_w2+eepsilon) .* nabla_g_y_w2;

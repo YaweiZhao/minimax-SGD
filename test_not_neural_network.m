@@ -79,7 +79,7 @@ end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix((n*n-n)/2));% hyper-parameter for sampling w
 %sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
-%sigma_0 = 1;
+sigma_0 = 1;
 
 %%initialize mu and L
 %theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
@@ -110,9 +110,9 @@ for t=1:T
     disp(t);
     Knn = zeros(n,n);%ARD kernel matrix
     %sample v, w
-    %logw = normrnd(mu_0,sigma_0,d+2,1);
-    %w = exp(logw);
-    w = exp(mu_0*ones(d+2,1));
+    logw = normrnd(mu_0,sigma_0,d+2,1);
+    w = exp(logw);
+    %w = exp(mu_0*ones(d+2,1));
     u_0 = 1;%%%NOTICE
     %u_0 = exp(randn(1));
     u = w(2:d+1,:);
@@ -264,7 +264,7 @@ for t=1:T
     %theta_avg = 1/t*sum(theta_sequence,2);
     %mu_temp = theta_avg(1:n,:);
     mu_temp = theta(1:n,:);
-    %% evaluate the train loss
+    %% compute the train likelyhold
     train_loss_temp = 0;
     for i=n_test+1:n
         temp = label(i,:)*mu_temp(i,:);
@@ -272,7 +272,7 @@ for t=1:T
     end
     train_loss(t,:) = train_loss_temp/(n-n_test);
     
-    %% evaluate the test loss
+    %% compute the test likelyhold
     test_loss_temp = 0;
     for i=1:n_test
         temp = label(i,:)*mu_temp(i,:);
@@ -294,33 +294,38 @@ u_save = mean(u_save,2);
 save('train_loss.mat','train_loss');
 save('test_loss.mat','test_loss');
 
-%% for test 
+
+
+
+
+
+%% conditional Gaussian process classification
 mu_temp = theta(1:n,:);
 %kernel matrix for training dataset
 Knn_train_train = zeros(n_train,n_train);
-    for i=1:n_train
-        for j=1:n_train
-                pair_diff = data(n_test+i,2:d+1) - data(n_test+j,2:d+1);
-                Knn_train_train(i,j) = exp(-1/2*pair_diff * diag(1 ./ (ones(d,1)*exp(mu_0))) * pair_diff')+ 1e-3;  
-        end
+for i=1:n_train
+    for j=1:n_train
+        pair_diff = data(n_test+i,2:d+1) - data(n_test+j,2:d+1);
+        Knn_train_train(i,j) = exp(-1/2*pair_diff * diag(1 ./ (ones(d,1)*exp(mu_0))) * pair_diff')+ 1e-3;
     end
+end
 %kernel matrix for test dataset x  training dataset
 Knn_test_train = zeros(n_test,n_train);
-    for i=1:n_test
-        for j=1:n_train
-                pair_diff = data(i,2:d+1) - data(n_test+j,2:d+1);
-                Knn_test_train(i,j) = exp(-1/2*pair_diff * diag(1 ./ (ones(d,1)*exp(mu_0))) * pair_diff')+ 1e-3;  
-        end
+for i=1:n_test
+    for j=1:n_train
+        pair_diff = data(i,2:d+1) - data(n_test+j,2:d+1);
+        Knn_test_train(i,j) = exp(-1/2*pair_diff * diag(1 ./ (ones(d,1)*exp(mu_0))) * pair_diff')+ 1e-3;
     end
-    
-    
-    mu_test2 = Knn_test_train*inv(Knn_train_train)*mu_temp(n_test+1:n,:);
-    %% evaluate the test loss
-    test_loss_temp = 0;
-    for i=1:n_test
-        temp = label(i,:)*mu_test2(i,:);
-        test_loss_temp = test_loss_temp - log(1+exp(-temp));
-    end
-    test_loss2 = test_loss_temp/n_test;
-    
-    
+end
+
+
+mu_test2 = Knn_test_train*inv(Knn_train_train)*mu_temp(n_test+1:n,:);
+% evaluate the test loss
+test_loss_temp = 0;
+for i=1:n_test
+    temp = label(i,:)*mu_test2(i,:);
+    test_loss_temp = test_loss_temp - log(1+exp(-temp));
+end
+test_loss2 = test_loss_temp/n_test;
+
+

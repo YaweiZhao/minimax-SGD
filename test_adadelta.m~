@@ -42,7 +42,7 @@ b2 = randn(num_nodes_nn,1);
 
 
 %Ada-delta optimization method
-rho = 0.95; eepsilon = 1e-6;
+rho = 0.9; eepsilon = 1e-6;
 E_g_square_old = zeros(n+n*n,1);
 E_delta_x_square_old = zeros(n+n*n,1);
 E_g_square_old_dual_w1 = zeros(1,num_nodes_nn);
@@ -139,31 +139,34 @@ for t=1:T
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
     y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+
+    %nabla_g1_theta_temp_mu = zeros(n,1);
     
-    nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   
-    nabla_g1_theta_temp_mu = nabla_g1_mu_L_temp;
-    nabla_g1_theta_temp_L = repmat(nabla_g1_mu_L_temp,1,n) .* repmat(epsilon', n, 1);
+    nabla_g1_theta_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);
+    nabla_g1_theta_temp_L =     
     
-%     for i=1:n
-%         for j=1:n
-%             if i==j
-%                  nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i)+(mu_temp(i,:)+L_temp(i,:)*epsilon)*Knn_inv(i,i);
-%             else
-%                 nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon);
-%             end
-%         end
-%     end
-%     nabla_g1_theta_temp_L = zeros(n,n);
-%     for i=1:n
-%         for j=1:n
-%             if i==j
-%                  nabla_g1_theta_temp_L(i,:) = nabla_g1_theta_temp_L(i,:) + (transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i) + Knn_inv(i,i)*(mu_temp(i,:)+L_temp(i,:)*epsilon))*epsilon';
-%             else
-%                 nabla_g1_theta_temp_L(i,:) = nabla_g1_theta_temp_L(i,:) + (Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon))*epsilon';
-%             end
-%         end
-%     end    
-%     
+    
+    for i=1:n
+        for j=1:n
+            if i==j
+                 nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i)+(mu_temp(i,:)+L_temp(i,:)*epsilon)*Knn_inv(i,i);
+            else
+                nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon);
+            end
+        end
+    end
+    nabla_g1_theta_temp_L = zeros(n,n);
+    for i=1:n
+        for j=1:n
+            if i==j
+                 nabla_g1_theta_temp_L(i,:) = nabla_g1_theta_temp_L(i,:) + (transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i) + Knn_inv(i,i)*(mu_temp(i,:)+L_temp(i,:)*epsilon))*epsilon';
+            else
+                nabla_g1_theta_temp_L(i,:) = nabla_g1_theta_temp_L(i,:) + (Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon))*epsilon';
+            end
+        end
+    end    
+    
+    %temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(tril(nabla_g1_theta_temp_L),n*n,1)];
     temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
     log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
 

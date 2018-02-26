@@ -21,14 +21,15 @@ T =100;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
+y_new_plot = zeros(T,1);
 
-w1 = 1e-6*rand(1,num_nodes_nn);
-w2 = rand(num_nodes_nn,n);
-b1 = 1e-6;
-b2 = rand(num_nodes_nn,1);
+w1 = randn(1,num_nodes_nn);
+w2 = 1e-1*randn(num_nodes_nn,n);
+b1 = 0;
+b2 = 1e-1*randn(num_nodes_nn,1);
 
 %SGD optimization method
-alpha_0 = 1e-6;% learning rate for the primal update
+alpha_0 = 1e-2;% learning rate for the primal update
 beta_0 =1e-3;%learning rate for the dual update
 %theta_sequence = zeros(n+n*n,T);
 
@@ -86,7 +87,7 @@ for t=1:T
     Knn = zeros(n,n);%ARD kernel matrix
     %sample v, w
     logw = normrnd(mu_0,sigma_0,d+2,1);
-    w = exp(logw);
+    %w = exp(logw);
     %w = exp(mu_0*ones(d+2,1));
     u_0 = 1;%%%NOTICE
     %u_0 = exp(randn(1));
@@ -114,7 +115,9 @@ for t=1:T
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
     y_new = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-
+    disp('y_new');
+    disp(y_new);
+    y_new_plot(t,:) = y_new;
 
     nabla_g1_theta_temp_mu = zeros(n,1);
     for i=1:n

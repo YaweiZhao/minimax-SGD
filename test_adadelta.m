@@ -15,7 +15,7 @@ training_data = data(n_test+1:n,2:d);
 [n_train,d] = size(training_data);
 
 %% initialize variables
-T =50000;
+T =100000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -64,8 +64,8 @@ for i=1:n
 end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix((n*n-n)/2));% hyper-parameter for sampling w
-sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
-%sigma_0 = 1;
+%sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
+sigma_0 = 1;
 
 %%initialize mu and L
 %theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
@@ -122,6 +122,8 @@ for t=1:T
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
+    if
+    end
     y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     
     nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   
@@ -132,7 +134,7 @@ for t=1:T
     log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
 
     nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
-    nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
+    nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp' ), n*n,1)];
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
     %the gradient w.r.t theta
     %nabla_g_y_theta_g = -1*exp(log(-y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
@@ -215,7 +217,7 @@ for t=1:T
         w2 = w2 + Delta_x_dual_w2;
         b1 = b1 + Delta_x_dual_b1;
         b2 = b2 + Delta_x_dual_b2;
-        y = -1*(w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1)^2;
+        y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
         E_delta_x_square_old_dual_w1 = E_delta_x_square_new_dual_w1;
         E_delta_x_square_old_dual_w2 = E_delta_x_square_new_dual_w2;
         E_delta_x_square_old_dual_b1 = E_delta_x_square_new_dual_b1;

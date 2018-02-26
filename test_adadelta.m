@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =30000;
+T =10000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);

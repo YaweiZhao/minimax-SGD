@@ -122,8 +122,7 @@ for t=1:T
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
-    if
-    end
+    
     y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     
     nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   
@@ -148,7 +147,7 @@ for t=1:T
     Delta_x = -1*sqrt(E_delta_x_square_old+eepsilon) ./ sqrt(E_g_square_new+eepsilon) .* nabla_g_y_theta_g;
     E_delta_x_square_new = rho*E_delta_x_square_old + (1-rho)*(Delta_x .^ 2);
     
-    theta = theta + Delta_x;
+    theta_temp = theta + Delta_x;
     
     E_delta_x_square_old = E_delta_x_square_new;
     E_g_square_old = E_g_square_new;
@@ -158,14 +157,24 @@ for t=1:T
     %alpha = alpha_0;
     %theta = theta - alpha*nabla_g_y_theta_g;
     %remember: L is a low-triangle matrix
-    L_temp = theta(n+1:n+n*n,:);
-    L_temp = reshape(L_temp,n,n);
-    L_temp = tril(L_temp);
-    theta(n+1:n+n*n,:) = reshape(L_temp,n*n,1);
-    %theta_sequence(:,t)  = theta;
-    %theta = mean(theta_sequence,2);
     
-    
+    mu_temp = theta_temp(1:n,:);
+    %% evaluate the train loss
+    train_loss_temp = 0;
+    for i=n_test+1:n
+        temp = label(i,:)*mu_temp(i,:);
+        train_loss_temp = train_loss_temp -log(1+exp(-temp));
+    end
+    train_loss_temp = train_loss_temp/(n-n_test);
+    if train_loss_temp < train_loss(t-1)
+        % do nothing
+    else
+        theta = theta_temp;
+        L_temp = theta(n+1:n+n*n,:);
+        L_temp = reshape(L_temp,n,n);
+        L_temp = tril(L_temp);
+        theta(n+1:n+n*n,:) = reshape(L_temp,n*n,1);
+    end
     %% update the dual variable
     %compute the stochastic gradients w.r.t y
     mu_temp = theta(1:n,:);
@@ -243,14 +252,7 @@ for t=1:T
     %% evaluate loss: for train data and test data
     %theta_avg = 1/t*sum(theta_sequence,2);
     %mu_temp = theta_avg(1:n,:);
-    mu_temp = theta(1:n,:);
-    %% evaluate the train loss
-    train_loss_temp = 0;
-    for i=n_test+1:n
-        temp = label(i,:)*mu_temp(i,:);
-        train_loss_temp = train_loss_temp -log(1+exp(-temp));
-    end
-    train_loss(t,:) = train_loss_temp/(n-n_test);
+    
     %% evaluate the test loss
     test_loss_temp = 0;
     for i=1:n_test

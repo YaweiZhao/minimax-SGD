@@ -16,21 +16,8 @@ training_data = data(n_test+1:n,2:d);
 %training_data = [training_data ones(n,1)];% add 1-offset
 [n_train,d] = size(training_data);
 
-
-% 
-% %% logistic regression
-% % label contains: 0 or 1 NOT -1 or 1
-% training_label(training_label<0)= 0;
-% test_label(test_label<0)= 0;
-% logi_w = glmfit(training_data,training_label,'binomial', 'link', 'logit');
-% train_likelyhold = glmval(logi_w,training_data, 'logit');
-% test_likelyhold = glmval(logi_w,test_data, 'logit');
-% mean_train_likelyhold = mean(training_label .* log(train_likelyhold) + (1-train_likelyhold) .* log(1-train_likelyhold));
-% mean_test_likelyhold = mean(test_label .* log(test_likelyhold) + (1-test_likelyhold) .* log(1-test_likelyhold));
-
-
 %% initialize variables
-T =100000;
+T =50000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -79,8 +66,8 @@ for i=1:n
 end
 pair_dist_ordering = sort(pair_dist);
 mu_0 = pair_dist_ordering(fix((n*n-n)/2));% hyper-parameter for sampling w
-%sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
-sigma_0 = 1;
+sigma_0 = 3*var(pair_dist_ordering);%hyper-parameter for sampling w
+%sigma_0 = 1;
 
 %%initialize mu and L
 %theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
@@ -115,8 +102,8 @@ for t=1:T
     logw = normrnd(mu_0,sigma_0,d+2,1);
     w = exp(logw);
     %w = exp(mu_0*ones(d+2,1));
-    u_0 = 1;%%%NOTICE
-    %u_0 = exp(randn(1));
+    %u_0 = 1;%%%NOTICE
+    u_0 = exp(randn(1));
     u = w(2:d+1,:);
     %u = ones(d,1);
     %tau = w(d+2,:);
@@ -136,27 +123,7 @@ for t=1:T
     %compute the stochastic gradients w.r.p.t theta 
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
-    L_temp = reshape(L_temp,n,n);    
-%     for i=1:n
-%         for j=1:n
-%             if i==j
-%                  nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i)+(mu_temp(i,:)+L_temp(i,:)*epsilon)*Knn_inv(i,i);
-%             else
-%                 nabla_g1_theta_temp_mu(i,:) = nabla_g1_theta_temp_mu(i,:) + Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon);
-%             end
-%         end
-%     end
-%     nabla_g1_theta_temp_L = zeros(n,n);
-%     for i=1:n
-%         for j=1:n
-%             if i==j
-%                  nabla_g1_theta_temp_L(i,:) = nabla_g1_theta_temp_L(i,:) + (transpose(mu_temp+L_temp*epsilon)*Knn_inv(:,i) + Knn_inv(i,i)*(mu_temp(i,:)+L_temp(i,:)*epsilon))*epsilon';
-%             else
-%                 nabla_g1_theta_temp_L(i,:) = nabla_g1_theta_temp_L(i,:) + (Knn_inv(i,j)*(mu_temp(j,:)+L_temp(j,:)*epsilon))*epsilon';
-%             end
-%         end
-%     end    
-%     
+
     y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     
     nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   
@@ -210,13 +177,7 @@ for t=1:T
     p_alpha_v_w = exp(-n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon));
     
     nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
-    %approximate essential_temp = 1/y+g_v_w(1,1);
-    %if exp(log_p_alpha_v_w+log(y)) >1e
-     %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
-    %else
-        %essential_temp = -1*exp(log_p_alpha_v_w + log(-1+exp(-1*(log(-y)+log_p_alpha_v_w))));%%%%%
-        essential_temp = 1/p_alpha_v_w_expectation*p_alpha_v_w+1/y;
-    %end
+    essential_temp = 1/p_alpha_v_w_expectation*p_alpha_v_w+1/y;
     nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     
     nabla_g_y_w2_temp = w1' .* ((exp(-1*(w2*epsilon+b2))) ./ ((1+(exp(-1*(w2*epsilon+b2)))) .^ 2)); 
@@ -227,7 +188,6 @@ for t=1:T
     nabla_g_y_b2 = essential_temp*nabla_g_y_b2_temp;
     
     % ada-delta method for the dual variable: y
-    
     E_g_square_new_dual_w1 = rho*E_g_square_old_dual_w1 + (1-rho)*(nabla_g_y_w1 .^ 2);
     E_g_square_new_dual_w2 = rho*E_g_square_old_dual_w2 + (1-rho)*(nabla_g_y_w2 .^ 2);
     E_g_square_new_dual_b1 = rho*E_g_square_old_dual_b1 + (1-rho)*(nabla_g_y_b1 .^ 2);
@@ -257,7 +217,7 @@ for t=1:T
         w2 = w2 + Delta_x_dual_w2;
         b1 = b1 + Delta_x_dual_b1;
         b2 = b2 + Delta_x_dual_b2;
-        y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+        y = -1*(w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1)^2;
         E_delta_x_square_old_dual_w1 = E_delta_x_square_new_dual_w1;
         E_delta_x_square_old_dual_w2 = E_delta_x_square_new_dual_w2;
         E_delta_x_square_old_dual_b1 = E_delta_x_square_new_dual_b1;
@@ -291,7 +251,6 @@ for t=1:T
         train_loss_temp = train_loss_temp -log(1+exp(-temp));
     end
     train_loss(t,:) = train_loss_temp/(n-n_test);
-    
     %% evaluate the test loss
     test_loss_temp = 0;
     for i=1:n_test
@@ -310,7 +269,7 @@ u_save = mean(u_save,2);
  save('b1.mat','b1')
  save('theta.mat','theta')
 
-%save('u_save.mat','u_save');
+save('u_save.mat','u_save');
 save('train_loss.mat','train_loss');
 save('test_loss.mat','test_loss');
 

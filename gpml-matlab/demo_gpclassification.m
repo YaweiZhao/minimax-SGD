@@ -1,7 +1,7 @@
 clear; close all;
 rng('default');
 %load data
-data = load('./heart.mat');
+data = load('../heart.mat');
 data = data.data;
 data = data(1:2:100,:);
 [n,d] = size(data);
@@ -18,11 +18,11 @@ training_data = data(n_test+1:n,2:d);% ALL data is used to train
 meanfunc = @meanConst; hyp.mean = 0;
 covfunc = @covSEard;   
 %hyp.cov = log(ones(1,d+1));%%%NOTICE
-u_cov = load('./u_save.mat');
-hyp.cov = log([transpose(u_cov.u_save) 1]);
+%u_cov = load('./u_save.mat');
+%hyp.cov = log([transpose(u_cov.u_save) 1]);
 likfunc = @likLogistic;
-hyp = minimize(hyp, @gp, -800, @infLaplace, meanfunc, covfunc, likfunc, training_data, training_label);
-[a b c d lp] = gp(hyp, @infLaplace, meanfunc, covfunc, likfunc, training_data, training_label, test_data, test_label);
+%hyp = minimize(hyp, @gp, -800, @infLaplace, meanfunc, covfunc, likfunc, training_data, training_label);
+%[a b c d lp] = gp(hyp, @infLaplace, meanfunc, covfunc, likfunc, training_data, training_label, test_data, test_label);
 
 %hyp = minimize(hyp, @gp, -900, @infEP, meanfunc, covfunc, likfunc, training_data, training_label);
 %[a b c d lp] = gp(hyp, @infEP, meanfunc, covfunc, likfunc, training_data, training_label, test_data, test_label);

@@ -2,7 +2,7 @@ function [T, train_loss, test_loss, num_nodes_nn, y_new_plot, w1, w2, b1, b2, mu
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 %% initialize variables
-T =100;
+T =10000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);

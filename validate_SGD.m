@@ -5,7 +5,7 @@ rng('default');
 [T, train_loss, test_loss, num_nodes_nn, y_new_plot, w1, w2, b1, b2, mu_0, sigma_0] = initialize_parameters(data, n,d);
 
 %SGD optimization method
-alpha_0 = 1e-3;% learning rate for the primal update
+alpha_0 = 1e-6;% learning rate for the primal update
 %initialize mu and L
 theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
 

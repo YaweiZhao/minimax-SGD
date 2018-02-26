@@ -2,7 +2,7 @@ function [T, train_loss, test_loss, num_nodes_nn, y_new_plot, w1, w2, b1, b2, mu
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 %% initialize variables
-T =10000;
+T =500;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -14,6 +14,7 @@ b1 = 0;
 b2 = 1e-1*randn(num_nodes_nn,1);
 
 pair_dist = zeros(n*n,1);
+
 for i=1:n
     for j=1:n
         if i==j

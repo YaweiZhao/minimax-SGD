@@ -9,40 +9,26 @@ n_test = fix(n/5);%used to test our algo.
 label = data(1:n,1);
 test_label = data(1:n_test,1);
 training_label = label(n_test+1:n,:);
-%label(label==2) = -1;% all the labels are +1 or -1.
 test_data = data(1:n_test,2:d);
 training_data = data(n_test+1:n,2:d);
 %training_data = transpose(mapstd(training_data'));
 %training_data = [training_data ones(n,1)];% add 1-offset
 [n_train,d] = size(training_data);
 
-
-% 
-% %% logistic regression
-% % label contains: 0 or 1 NOT -1 or 1
-% training_label(training_label<0)= 0;
-% test_label(test_label<0)= 0;
-% logi_w = glmfit(training_data,training_label,'binomial', 'link', 'logit');
-% train_likelyhold = glmval(logi_w,training_data, 'logit');
-% test_likelyhold = glmval(logi_w,test_data, 'logit');
-% mean_train_likelyhold = mean(training_label .* log(train_likelyhold) + (1-train_likelyhold) .* log(1-train_likelyhold));
-% mean_test_likelyhold = mean(test_label .* log(test_likelyhold) + (1-test_likelyhold) .* log(1-test_likelyhold));
-
-
 %% initialize variables
-T =1000;
+T =100;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
 
-w1 = rand(1,num_nodes_nn);
-w2 = rand(num_nodes_nn,n);
-b1 = 1;
-b2 = rand(num_nodes_nn,1);
+w1 = randn(1,num_nodes_nn);
+w2 = randn(num_nodes_nn,n);
+b1 = 0;
+b2 = randn(num_nodes_nn,1);
 
 
 %Ada-delta optimization method
-rho = 0.95; eepsilon = 1e-6;
+rho = 0.99; eepsilon = 1e-6;
 E_g_square_old = zeros(n+n*n,1);
 E_delta_x_square_old = zeros(n+n*n,1);
 E_g_square_old_dual_w1 = zeros(1,num_nodes_nn);
@@ -58,15 +44,6 @@ E_delta_x_square_old_dual_b2 = zeros(num_nodes_nn,1);
 %alpha_0 = 1e-10;% learning rate for the primal update
 %beta_0 =1e-8;%learning rate for the dual update
 %theta_sequence = zeros(n+n*n,T);
-
-%w1 = load('w11.mat');
-%w1 = w1.w1;
-%w2 = load('w22.mat');
-%w2 = w2.w2;
-%b1 = load('b11.mat');
-%b1 = b1.b1;
-%b2 = load('b22.mat');
-%b2 = b2.b2;
 
 pair_dist = zeros(n*n,1);
 for i=1:n
@@ -136,7 +113,7 @@ for t=1:T
     epsilon = randn(n,1);
 
     %% update the primal variable
-    %compute the stochastic gradients w.r.p.t theta 
+    %compute the stochastic gradients w.r.t theta 
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
@@ -173,7 +150,6 @@ for t=1:T
     nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
     nabla_g2_theta = nabla_g2_theta_I1 + nabla_g2_theta_I2;
     %the gradient w.r.t theta
-    %nabla_g_y_theta_g = -1*exp(log(-y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
     nabla_g1_theta_temp = exp(log_nabla_g1_theta_temp)*temp;
     nabla_g_y_theta_g = 1/p_alpha_v_w_expectation*(-1)*exp(y_new)*nabla_g1_theta_temp - nabla_g2_theta;
     
@@ -206,19 +182,11 @@ for t=1:T
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
-    %y = 1/p_alpha_v_w_expectation*w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-     y_new = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    %p_alpha_v_w = 1/(power(2*3.14159,n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
+    y_new = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     p_alpha_v_w = exp(-n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon));
     
     nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
-    %approximate essential_temp = 1/y+g_v_w(1,1);
-    %if exp(log_p_alpha_v_w+log(y)) >1e
-     %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
-    %else
-        %essential_temp = -1*exp(log_p_alpha_v_w + log(-1+exp(-1*(log(-y)+log_p_alpha_v_w))));%%%%%
-        essential_temp = 1/p_alpha_v_w_expectation*(-1)*exp(y_new)*p_alpha_v_w+1;
-    %end
+    essential_temp = 1/p_alpha_v_w_expectation*(-1)*exp(y_new)*p_alpha_v_w+1;
     nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     
     nabla_g_y_w2_temp = w1' .* ((exp(-1*(w2*epsilon+b2))) ./ ((1+(exp(-1*(w2*epsilon+b2)))) .^ 2)); 

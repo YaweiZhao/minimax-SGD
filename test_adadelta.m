@@ -121,7 +121,7 @@ for t=1:T
     %compute the stochastic gradients w.r.p.t theta 
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
-
+    L_temp = reshape(L_temp,n,n);
     y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     
     nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   

@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =1000;
+T =50000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -123,12 +123,10 @@ for t=1:T
     tau = 1e-3;
     u_save(:,t) = u;
     %compute the kernel matrice
-    for i=1:n
-        for j=1:n
-                pair_diff = data(i,2:d+1) - data(j,2:d+1);
-                Knn(i,j) = u_0*exp(-1/2*pair_diff * diag(1 ./ u) * pair_diff')+ tau;  
-        end
-    end
+    kernel_temp = (data(:,2:d+1) .* repmat(transpose(1 ./ u),n,1)) * transpose(data(:,2:d+1));
+    kernel_diag = diag(kernel_temp);
+    Knn_temp = -2*kernel_temp + ones(n,n)*diag(kernel_diag) +diag( kernel_diag)*ones(n,n);
+    Knn = u_0*exp(-1/2*Knn_temp)+tau;
     
     %define the auxilary matrix
     Knn_inv = inv(Knn);

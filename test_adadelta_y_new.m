@@ -30,14 +30,14 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =10000;
+T =1000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
 
-w1 = -rand(1,num_nodes_nn);
+w1 = rand(1,num_nodes_nn);
 w2 = rand(num_nodes_nn,n);
-b1 = -1;
+b1 = 1;
 b2 = rand(num_nodes_nn,1);
 
 
@@ -104,7 +104,8 @@ L_temp = theta(n+1:n+n*n,:);
 L_temp = reshape(L_temp,n,n);
 %to match the y and the gradient of g1
 %p_alpha_v_w_expectation = exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_expectation_inv*(mu_temp+L_temp*epsilon));
-p_alpha_v_w_expectation = 1e-20*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
+%p_alpha_v_w_expectation = 1e-20*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_det-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
+p_alpha_v_w_expectation = 1;
 %parameters are saved for using in classic gp classification
 u_save = zeros(d, T);
 for t=1:T
@@ -131,8 +132,8 @@ for t=1:T
     
     %define the auxilary matrix
     Knn_inv = inv(Knn);
-    Knn_det = exp(logdet(Knn));
-    epsilon = transpose(mvnrnd(zeros(1,n),eye(n)));%%%%%%%
+    Knn_logdet = logdet(Knn);
+    epsilon = randn(n,1);
 
     %% update the primal variable
     %compute the stochastic gradients w.r.p.t theta 
@@ -140,8 +141,8 @@ for t=1:T
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
     %y = 1/p_alpha_v_w_expectation*w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-
+    y_new = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+    %y_new = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
 
     nabla_g1_theta_temp_mu = zeros(n,1);
     for i=1:n
@@ -166,7 +167,7 @@ for t=1:T
     
     %temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(tril(nabla_g1_theta_temp_L),n*n,1)];
     temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
-    log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*Knn_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
+    log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
 
     nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
     nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];
@@ -174,10 +175,9 @@ for t=1:T
     %the gradient w.r.t theta
     %nabla_g_y_theta_g = -1*exp(log(-y)+log_nabla_g1_theta_temp)*temp-nabla_g2_theta;
     nabla_g1_theta_temp = exp(log_nabla_g1_theta_temp)*temp;
-    nabla_g_y_theta_g = 1/p_alpha_v_w_expectation*y*nabla_g1_theta_temp - nabla_g2_theta;
+    nabla_g_y_theta_g = 1/p_alpha_v_w_expectation*(-1)*exp(y_new)*nabla_g1_theta_temp - nabla_g2_theta;
     
     % update rule for the primal variable: theta
-    
     %set the primal step size via ada-delta method
     E_g_square_new = rho*E_g_square_old + (1-rho)*(nabla_g_y_theta_g .^ 2);
     Delta_x = -1*sqrt(E_delta_x_square_old+eepsilon) ./ sqrt(E_g_square_new+eepsilon) .* nabla_g_y_theta_g;
@@ -207,9 +207,9 @@ for t=1:T
     L_temp = theta(n+1:n+n*n,:);
     L_temp = reshape(L_temp,n,n);
     %y = 1/p_alpha_v_w_expectation*w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+     y_new = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
     %p_alpha_v_w = 1/(power(2*3.14159,n/2) * sqrt(Knn_det))*exp(-1/2*transpose(mu_temp + L_temp*epsilon) * Knn_inv*(mu_temp + L_temp*epsilon));
-    p_alpha_v_w = exp(-n/2*log(2*3.14159)-1/2*Knn_det-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon));
+    p_alpha_v_w = exp(-n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon));
     
     nabla_g_y_g1_temp =  1 ./ (1+exp(-1*(w2*epsilon+b2)));
     %approximate essential_temp = 1/y+g_v_w(1,1);
@@ -217,7 +217,7 @@ for t=1:T
      %   essential_temp = exp(log_p_alpha_v_w + exp(- log(y)-log_p_alpha_v_w));
     %else
         %essential_temp = -1*exp(log_p_alpha_v_w + log(-1+exp(-1*(log(-y)+log_p_alpha_v_w))));%%%%%
-        essential_temp = 1/p_alpha_v_w_expectation*p_alpha_v_w+1/y;
+        essential_temp = 1/p_alpha_v_w_expectation*(-1)*exp(y_new)*p_alpha_v_w+1;
     %end
     nabla_g_y_w1 = nabla_g_y_g1_temp' * essential_temp;% 1 x num_nodes_nn
     

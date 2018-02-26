@@ -12,20 +12,17 @@ theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
 n_w = 30;
 Knn_list = zeros(n,n,n_w);
 Knn_inv_list = zeros(n,n,n_w);
-log_Knn_det_list = zeros(n_w,1);
 for i = 1:n_w
         logw = normrnd(mu_0,sigma_0,d+2,1);
         [ Knn, Knn_inv,  log_Knn_det] = compute_kernel( data,n,d, logw);
         Knn_list(:,:,i) = Knn;
-        log_Knn_det_list(i,:) = log_Knn_det;
         Knn_inv_list(:,:,i) = Knn_inv;
 end
 
 n_w = 30;
 for t=1:T
     disp(t);
-    temp_sum_other = 0;
-    temp_sum_gradient = zeros(n+n*n,1);
+    temp = zeros(n+n*n,1);
     for i_w = 1: n_w
         
         epsilon = randn(n,1);
@@ -57,12 +54,12 @@ for t=1:T
                 end
             end
         end
-        temp_other = 1/((2*3.14159)^(n/2)*exp(log_Knn_det_list(i_w,:)))*exp(-1/2*transpose(mu_temp + L_temp*epsilon)*Knn_inv_list(:,:,i_w)*(mu_temp + L_temp*epsilon));
+        temp_other = 1/((2*3.14159)^(n/2)*Knn_det_list(i_w,:))*exp(-1/2*transpose(mu_temp + L_temp*epsilon)*Knn_inv_list(:,:,i_w)*(mu_temp + L_temp*epsilon));
         temp_gradient = (-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
-        temp_sum_other = temp_sum_other + temp_other;
+        temp_sum_other = temp_sum + temp_other;
         temp_sum_gradient = temp_sum_gradient + temp_other*temp_gradient;
     end
-    temp =  1/temp_sum_other * temp_sum_gradient;
+    temp =  (1/temp_sum_other * temp_sum_gradient);
     
     nabla_g2_theta_I1 = [zeros(n_test,1); training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))); reshape([zeros(n_test,n); repmat(training_label ./ (1+exp(training_label .* (mu_temp(n_test+1:n,:)+L_temp(n_test+1:n,:)*epsilon))),1,n) .* repmat(epsilon',n-n_test,1)], n*n,1)];
     nabla_g2_theta_I2 = [zeros(n,1);reshape( inv(L_temp'), n*n,1)];

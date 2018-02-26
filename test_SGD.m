@@ -29,8 +29,8 @@ b1 = 0;
 b2 = 1e-1*randn(num_nodes_nn,1);
 
 %SGD optimization method
-alpha_0 = 1e-2;% learning rate for the primal update
-beta_0 =1e-3;%learning rate for the dual update
+alpha_0 = 1e-6;% learning rate for the primal update
+beta_0 =1e-6;%learning rate for the dual update
 %theta_sequence = zeros(n+n*n,T);
 
 %w1 = load('w11.mat');
@@ -87,7 +87,7 @@ for t=1:T
     Knn = zeros(n,n);%ARD kernel matrix
     %sample v, w
     logw = normrnd(mu_0,sigma_0,d+2,1);
-    %w = exp(logw);
+    w = exp(logw);
     %w = exp(mu_0*ones(d+2,1));
     u_0 = 1;%%%NOTICE
     %u_0 = exp(randn(1));

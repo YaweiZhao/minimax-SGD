@@ -30,7 +30,7 @@ training_data = data(n_test+1:n,2:d);
 
 
 %% initialize variables
-T =50000;
+T =100000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -107,7 +107,7 @@ p_alpha_v_w_expectation = 1e-18*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_logd
 %parameters are saved for using in classic gp classification
 u_save = zeros(d, T);
 for t=1:T
-    if mod(t, 50) == 0 
+    if mod(t, 500) == 0 
         disp(t);
     end
     Knn = zeros(n,n);%ARD kernel matrix
@@ -132,18 +132,11 @@ for t=1:T
     Knn_inv = inv(Knn);
     Knn_logdet = logdet(Knn);
     epsilon = randn(n,1);
-
-    %% update the primal variable
+   %% update the primal variable
     %compute the stochastic gradients w.r.p.t theta 
     mu_temp = theta(1:n,:);
     L_temp = theta(n+1:n+n*n,:);
-    L_temp = reshape(L_temp,n,n);
-    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
-    
-    nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   
-    nabla_g1_theta_temp_mu = nabla_g1_mu_L_temp;
-    nabla_g1_theta_temp_L = repmat(nabla_g1_mu_L_temp,1,n) .* repmat(epsilon', n, 1);
-    
+    L_temp = reshape(L_temp,n,n);    
 %     for i=1:n
 %         for j=1:n
 %             if i==j
@@ -164,6 +157,12 @@ for t=1:T
 %         end
 %     end    
 %     
+    y = w1 * (1 ./ exp(-1*(w2*epsilon+b2)))+b1;
+    
+    nabla_g1_mu_L_temp = Knn_inv*(mu_temp+L_temp*epsilon)+transpose(transpose(mu_temp+L_temp*epsilon)*Knn_inv);   
+    nabla_g1_theta_temp_mu = nabla_g1_mu_L_temp;
+    nabla_g1_theta_temp_L = repmat(nabla_g1_mu_L_temp,1,n) .* repmat(epsilon', n, 1);
+
     temp = (-1/2)*[nabla_g1_theta_temp_mu; reshape(nabla_g1_theta_temp_L,n*n,1)];
     log_nabla_g1_theta_temp = -n/2*log(2*3.14159)-1/2*Knn_logdet-1/2*transpose(mu_temp+L_temp*epsilon)*Knn_inv*(mu_temp+L_temp*epsilon);
 
@@ -251,8 +250,8 @@ for t=1:T
     b2_temp = b2 + Delta_x_dual_b2;
     y_temp = w1_temp * (1 ./ exp(-1*(w2_temp*epsilon+b2_temp)))+b1_temp;
     if y_temp>= 0 
-        disp('y');
-        disp(y_temp);
+        %disp('y');
+        %disp(y_temp);
     else
         w1 = w1 + Delta_x_dual_w1;
         w2 = w2 + Delta_x_dual_w2;

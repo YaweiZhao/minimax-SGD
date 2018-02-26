@@ -15,7 +15,7 @@ training_data = data(n_test+1:n,2:d);
 [n_train,d] = size(training_data);
 
 %% initialize variables
-T =100000;
+T =10;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -91,6 +91,7 @@ L_temp = reshape(L_temp,n,n);
 p_alpha_v_w_expectation = 1e-18*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_logdet-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
 %parameters are saved for using in classic gp classification
 u_save = zeros(d, T);
+train_loss(1,:) = -10;
 for t=1:T
     if mod(t, 500) == 0 
         disp(t);
@@ -165,8 +166,9 @@ for t=1:T
         temp = label(i,:)*mu_temp(i,:);
         train_loss_temp = train_loss_temp -log(1+exp(-temp));
     end
-    train_loss_temp = train_loss_temp/(n-n_test);
-    if train_loss_temp < train_loss(t-1)
+    train_loss(t,:) = train_loss_temp/(n-n_test);
+    
+    if t>=2 && train_loss(t,:) < train_loss(t-1)
         % do nothing
     else
         theta = theta_temp;
@@ -174,6 +176,7 @@ for t=1:T
         L_temp = reshape(L_temp,n,n);
         L_temp = tril(L_temp);
         theta(n+1:n+n*n,:) = reshape(L_temp,n*n,1);
+        
     end
     %% update the dual variable
     %compute the stochastic gradients w.r.t y

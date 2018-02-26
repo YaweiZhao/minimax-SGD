@@ -9,14 +9,12 @@ alpha_0 = 1e-1;% learning rate for the primal update
 %initialize mu and L
 theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
 
-
-    
 n_w = 30;
 for t=1:T
     disp(t);
     temp = zeros(n+n*n,1);
     for i_w = 1:n_w
-        mu_sample = randn()*mu_0;
+        mu_sample = normrnd(mu_0,sigma_0,d+1,1);
         [ Knn, Knn_inv,  log_Knn_det] = compute_kernel( data,n,d, mu_sample);
         
         epsilon = randn(n,1);

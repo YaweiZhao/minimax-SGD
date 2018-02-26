@@ -2,7 +2,7 @@ function [ Knn, Knn_inv,  log_Knn_det] = compute_kernel( data,n,d, mu_0)
 %UNTITLED5 Summary of this function goes here
 %   Detailed explanation goes here
     Knn = zeros(n,n);%ARD kernel matrix
-    w = exp(mu_0*ones(d+2,1));
+    w = exp(mu_0);
     u_0 = 1;
     u = w(2:d+1,:);
     tau = 1e-3;

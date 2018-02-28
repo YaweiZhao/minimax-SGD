@@ -88,13 +88,6 @@ L_temp = reshape(L_temp,n,n);
 p_alpha_v_w_expectation = 1e-18*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_logdet-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
 %parameters are saved for using in classic gp classification
 for t=1:T
-    if mod(t, 1000) == 0 
-        disp(t);
-        disp('test loss');
-        disp(test_loss(fix(t/1000),:));
-        disp('train loss');
-        disp(train_loss(fix(t/1000),:));
-    end
     %sample v, w
     logw = normrnd(mu_0,sigma_0,d+2,1);
     w = exp(logw);
@@ -142,7 +135,7 @@ for t=1:T
             temp = label(i,:)*mu_temp(i,:);
             train_loss_temp = train_loss_temp -log(1+exp(-temp));
         end
-        train_loss(t,:) = train_loss_temp/(n-n_test);
+        train_loss(fix(t/1000),:) = train_loss_temp/(n-n_test);
     end
     
     theta = theta_temp;
@@ -225,9 +218,16 @@ for t=1:T
             temp = label(i,:)*mu_temp(i,:);
             test_loss_temp = test_loss_temp - log(1+exp(-temp));
         end
-        test_loss(t,:) = test_loss_temp/n_test;
+        test_loss(fix(t/1000),:) = test_loss_temp/n_test;
     end
-
+    %display
+    if mod(t, 1000) == 0 
+        disp(t);
+        disp('test loss');
+        disp(test_loss(fix(t/1000),:));
+        disp('train loss');
+        disp(train_loss(fix(t/1000),:));
+    end
 end
 save('w1.mat','w1')
 save('w2.mat','w2')

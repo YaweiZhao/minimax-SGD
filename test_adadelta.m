@@ -15,7 +15,7 @@ training_data = data(n_test+1:n,2:d);
 [n_train,d] = size(training_data);
 
 %% initialize variables
-T =10;
+T =100000;
 train_loss = zeros(T,1);
 test_loss = zeros(T,1);
 num_nodes_nn = fix(n);
@@ -93,8 +93,12 @@ p_alpha_v_w_expectation = 1e-18*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_logd
 u_save = zeros(d, T);
 train_loss(1,:) = -10;
 for t=1:T
-    if mod(t, 500) == 0 
+    if mod(t, 1000) == 0 
         disp(t);
+        disp('test loss');
+        disp(test_loss(t,:));
+        disp('train loss');
+        disp(train_loss(t,:));
     end
     Knn = zeros(n,n);%ARD kernel matrix
     %sample v, w

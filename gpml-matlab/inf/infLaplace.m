@@ -17,7 +17,8 @@ if nargin<=6, opt = []; end                        % make opt variable available
 
 inf = 'infLaplace';
 n = size(x,1);
-if isstruct(cov), K = cov;                   % use provided covariance structure
+if isstruct(cov), K = cov; 
+disp('hhhhhhhhhhhhaaaaaaaaa');                  % use provided covariance structure
 else K = apx(hyp,cov,x,opt); end               % set up covariance approximation
 if isnumeric(mean), m = mean;                         % use provided mean vector
 else [m,dm] = feval(mean{:}, hyp.mean, x); end           % mean vector and deriv

@@ -62,7 +62,7 @@ sigma_0 = 1;
 
 
 u_0 = 1;
-tau = 1e-6;
+tau = 1e-3;
 %[train_loss2, test_loss2 ] = conditional_gauss( training_data,test_data,training_label, test_label,n_train, n_test,d, mu_0, u_0, tau);
 %%initialize mu and L
 %theta =[zeros(n,1); reshape(eye(n),n*n,1)];% use constant to initialize
@@ -85,7 +85,7 @@ mu_temp = theta(1:n,:);
 L_temp = theta(n+1:n+n*n,:);
 L_temp = reshape(L_temp,n,n);
 %to match the y and the gradient of g1
-p_alpha_v_w_expectation = 1e-18*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_logdet-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
+p_alpha_v_w_expectation = 1e-25*exp(-n/2*log(2*3.14159)-1/2*Knn_expectation_logdet-1/2*transpose(mu_temp+L_temp*zeros(n,1))*Knn_expectation_inv*(mu_temp+L_temp*zeros(n,1)));
 %parameters are saved for using in classic gp classification
 for t=1:T
     %sample v, w

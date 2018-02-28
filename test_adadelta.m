@@ -17,7 +17,7 @@ training_data = data(n_test+1:n,2:d);
 [n_train,d] = size(training_data);
 
 %% initialize variables
-T =300000;
+T =500000;
 train_loss = zeros(fix(T/1000),1);
 test_loss = zeros(fix(T/1000),1);
 num_nodes_nn = fix(n);
@@ -79,7 +79,7 @@ end
 Knn_expectation_logdet = logdet(Knn_expectation);
 Knn_expectation_inv = inv(Knn_expectation);
 L_temp = chol(Knn_expectation,'lower');
-theta = [[zeros(n_test,1);training_label]; reshape( L_temp, n*n,1)];%initialize theta
+theta = [[zeros(n_test,1);zeros(n_train,1)]; reshape( L_temp, n*n,1)];%initialize theta
 %theta = [zeros(n,1); reshape( L_temp, n*n,1)];%initialize theta
 mu_temp = theta(1:n,:);
 L_temp = theta(n+1:n+n*n,:);
